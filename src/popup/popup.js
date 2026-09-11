@@ -38,13 +38,21 @@
     save({ enabled: enabledInput.checked });
   });
 
+  // Dragging previews live, but chrome.storage.sync only allows 120 writes per
+  // minute, so the preview is throttled and the final value is written on
+  // release no matter what the throttled writes did.
   blurInput.addEventListener('input', function () {
     var amount = api.clampBlur(blurInput.value);
     renderBlurValue(amount);
     clearTimeout(writeTimer);
     writeTimer = setTimeout(function () {
       save({ blurAmount: amount });
-    }, 120);
+    }, 400);
+  });
+
+  blurInput.addEventListener('change', function () {
+    clearTimeout(writeTimer);
+    save({ blurAmount: api.clampBlur(blurInput.value) });
   });
 
   optionsButton.addEventListener('click', function () {

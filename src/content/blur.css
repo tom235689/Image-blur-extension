@@ -1,9 +1,14 @@
 /*
- * Injected at document_start in every frame, so media is already blurred
- * before the first paint. Blurring is the default state of this sheet: the
- * content script only has to switch the modifier classes on <html> once the
- * stored settings have been read, which means a slow storage read can never
- * flash an unblurred image.
+ * Injected at document_start in every frame, and adopted into every open
+ * shadow root the content script finds, so media is already blurred before the
+ * first paint. Blurring is the default state of this sheet: the content script
+ * only has to switch the modifier classes on <html> once the stored settings
+ * have been read, which means a slow storage read can never flash an unblurred
+ * image.
+ *
+ * Selectors come in two flavours because a shadow tree cannot see <html>:
+ * "html.ibx-off img" for the document, ":host-context(html.ibx-off) img" for
+ * the same rule inside a shadow root.
  *
  * ibx-off   - extension disabled, or the current host is on the exception list
  * ibx-hover - reveal the element the pointer is over
@@ -12,6 +17,7 @@
  * ibx-bg-direct  - no text inside, so the element itself can be blurred
  * ibx-bg-overlay - has text, so only a blurred copy of the background is drawn
  * ibx-bg-anchor  - statically positioned overlay host that needs a containing block
+ * ibx-bg-canvas  - <html> or <body>, whose background is painted over the whole viewport
  * ibx-vector     - inline <svg> large enough to be artwork rather than an icon
  */
 
@@ -55,6 +61,19 @@ embed[type^="image/"],
   transition: none !important;
 }
 
+/*
+ * A background image on <html> or <body> is propagated to the canvas and
+ * painted across the whole viewport, not just the element's box, so the copy
+ * that hides it has to cover the viewport too. Must stay after the rule above:
+ * both have the same specificity.
+ */
+.ibx-bg-canvas::before {
+  position: fixed !important;
+  inset: calc(var(--ibx-blur-radius) * -2) !important;
+  clip-path: inset(calc(var(--ibx-blur-radius) * 2)) !important;
+}
+
+/* Reveal on hover - document tree. */
 html.ibx-hover img:hover,
 html.ibx-hover video:hover,
 html.ibx-hover canvas:hover,
@@ -69,6 +88,30 @@ html.ibx-hover .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
 }
 
+/*
+ * The pointer is over <body> almost all of the time, so a page wide background
+ * would otherwise be revealed permanently. Must stay after the rule above.
+ */
+html.ibx-hover .ibx-bg-canvas:hover::before {
+  opacity: 1 !important;
+}
+
+/* Reveal on hover - shadow trees. */
+:host-context(html.ibx-hover) img:hover,
+:host-context(html.ibx-hover) video:hover,
+:host-context(html.ibx-hover) canvas:hover,
+:host-context(html.ibx-hover) object[type^="image/"]:hover,
+:host-context(html.ibx-hover) embed[type^="image/"]:hover,
+:host-context(html.ibx-hover) .ibx-vector:hover,
+:host-context(html.ibx-hover) .ibx-bg-direct:hover {
+  filter: none !important;
+}
+
+:host-context(html.ibx-hover) .ibx-bg-overlay:hover::before {
+  opacity: 0 !important;
+}
+
+/* Disabled or excluded - document tree. */
 html.ibx-off img,
 html.ibx-off video,
 html.ibx-off canvas,
@@ -84,5 +127,29 @@ html.ibx-off .ibx-bg-anchor {
 }
 
 html.ibx-off .ibx-bg-overlay::before {
+  display: none !important;
+}
+
+/* <html> is never a descendant of itself, so it needs its own rule. */
+html.ibx-off.ibx-bg-overlay::before {
+  display: none !important;
+}
+
+/* Disabled or excluded - shadow trees. */
+:host-context(html.ibx-off) img,
+:host-context(html.ibx-off) video,
+:host-context(html.ibx-off) canvas,
+:host-context(html.ibx-off) object[type^="image/"],
+:host-context(html.ibx-off) embed[type^="image/"],
+:host-context(html.ibx-off) .ibx-vector,
+:host-context(html.ibx-off) .ibx-bg-direct {
+  filter: none !important;
+}
+
+:host-context(html.ibx-off) .ibx-bg-anchor {
+  position: static !important;
+}
+
+:host-context(html.ibx-off) .ibx-bg-overlay::before {
   display: none !important;
 }

@@ -45,11 +45,25 @@ style and tags what it finds:
 | `ibx-bg-direct` | background image, no text inside - the element itself is blurred |
 | `ibx-bg-overlay` | background image plus text - a blurred copy of the background is drawn behind the text |
 | `ibx-bg-anchor` | overlay host that needed `position: relative` |
+| `ibx-bg-canvas` | `<html>` or `<body>`, whose background is painted across the whole viewport |
 | `ibx-vector` | inline `<svg>` of at least 48x48 px |
 
-A `MutationObserver` keeps up with dynamically added content, and the page is
-swept again on `DOMContentLoaded` and shortly after `load` to catch late
-stylesheets and lazily loaded sections.
+A document stylesheet does not reach inside a shadow tree, so every open shadow
+root that turns up gets the same sheet adopted into it (the service worker hands
+over the text) and is observed and scanned like the main document. Shadow tree
+copies of the rules use `:host-context(html.ibx-off)` where the document uses
+`html.ibx-off`, because a shadow tree cannot see `<html>`.
+
+A `MutationObserver` keeps up with dynamically added content, the page is swept
+again on `DOMContentLoaded` and shortly after `load` to catch late stylesheets
+and lazily loaded sections, and the element under the pointer is re-checked on
+`mouseover` so a background image that only exists in a `:hover` rule - which
+changes no attribute and fires no mutation - is caught as well.
+
+The scan itself is spread over idle callbacks with a per chunk time budget, and
+each chunk reads style and layout first and writes its classes afterwards, so no
+element forces a synchronous reflow. A page of 8000 elements finishes about 1.2
+seconds after navigation starts.
 
 ## Known limits
 
@@ -58,6 +72,12 @@ stylesheets and lazily loaded sections.
 - Background images declared on `::before` / `::after` cannot be detected, and an
   element that already uses `::before` has that pseudo element replaced by the
   blurred overlay.
+- Closed shadow roots (`attachShadow({ mode: 'closed' })`) are invisible to
+  extensions, so media inside them stays sharp.
+- A background image on `<html>` or `<body>` is covered by a viewport sized copy
+  that does not scroll with the page, so such a background looks fixed while it
+  is blurred. Hovering never reveals it either, since the pointer is over
+  `<body>` nearly all of the time.
 - Media inside a cross origin frame is handled by that frame's own copy of the
   content script; frames the browser does not let extensions touch stay sharp.
 - On an excluded site images may be blurred for a few milliseconds until the
@@ -73,6 +93,6 @@ src/content/blur.css          injected at document_start
 src/content/content.js        activation and element tagging
 src/popup/                    toolbar popup
 src/options/                  options page
-src/background/               service worker (defaults seeding, toolbar badge)
+src/background/               service worker (defaults seeding, badge, stylesheet handover)
 icons/
 ```

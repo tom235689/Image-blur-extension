@@ -74,13 +74,20 @@
     renderSites();
   }
 
+  // Throttled while dragging to stay inside the storage write quota, with the
+  // released value always written in full.
   blurInput.addEventListener('input', function () {
     var amount = api.clampBlur(blurInput.value);
     blurValue.textContent = amount + ' px';
     clearTimeout(writeTimer);
     writeTimer = setTimeout(function () {
       save({ blurAmount: amount });
-    }, 150);
+    }, 400);
+  });
+
+  blurInput.addEventListener('change', function () {
+    clearTimeout(writeTimer);
+    save({ blurAmount: api.clampBlur(blurInput.value) });
   });
 
   hoverInput.addEventListener('change', function () {

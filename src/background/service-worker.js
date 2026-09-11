@@ -1,6 +1,7 @@
 /**
- * Service worker: seeds the stored defaults on install and keeps the toolbar
- * badge in sync so the off state is visible without opening the popup.
+ * Service worker: seeds the stored defaults on install, keeps the toolbar badge
+ * in sync so the off state is visible without opening the popup, and hands the
+ * content script the stylesheet it adopts into shadow roots.
  */
 importScripts('/src/common/defaults.js');
 
@@ -35,6 +36,38 @@ chrome.storage.onChanged.addListener(function (changes, area) {
   if (area === 'sync') {
     refreshBadge();
   }
+});
+
+var blurCssPromise = null;
+
+/**
+ * A content script cannot read its own extension resources unless they are
+ * declared web accessible, which would expose them to every page. Reading the
+ * file here and passing the text back keeps the stylesheet private.
+ */
+function readBlurCss() {
+  if (!blurCssPromise) {
+    blurCssPromise = fetch(chrome.runtime.getURL('src/content/blur.css'))
+      .then(function (response) {
+        return response.text();
+      })
+      .catch(function () {
+        blurCssPromise = null;
+        return '';
+      });
+  }
+  return blurCssPromise;
+}
+
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (!message || message.type !== 'ibx-blur-css') {
+    return false;
+  }
+  readBlurCss().then(function (css) {
+    sendResponse({ css: css });
+  });
+  // Keeps the message channel open until the stylesheet has been read.
+  return true;
 });
 
 refreshBadge();
