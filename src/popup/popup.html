@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Image Blur</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="panel">
+      <section class="row row-header">
+        <div class="titles">
+          <h1>Image Blur</h1>
+          <p id="state-label" class="muted">Blurring images on every site</p>
+        </div>
+        <label class="switch" title="Turn blurring on or off">
+          <input type="checkbox" id="enabled" />
+          <span class="track"><span class="thumb"></span></span>
+        </label>
+      </section>
+
+      <section class="row">
+        <div class="label-line">
+          <label for="blur-amount">Blur strength</label>
+          <output id="blur-value" for="blur-amount">12 px</output>
+        </div>
+        <input type="range" id="blur-amount" min="2" max="60" step="1" value="12" />
+      </section>
+
+      <button type="button" id="open-options" class="link">Excluded sites and more settings</button>
+    </main>
+
+    <script src="../common/defaults.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

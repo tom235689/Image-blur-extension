@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Image Blur options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <h1>Image Blur</h1>
+        <p class="muted">Images, CSS background images and videos are blurred on every site except the ones listed below.</p>
+      </header>
+
+      <section class="card">
+        <h2>Blur strength</h2>
+        <div class="label-line">
+          <label for="blur-amount">Radius applied to every blurred element</label>
+          <output id="blur-value" for="blur-amount">12 px</output>
+        </div>
+        <input type="range" id="blur-amount" min="2" max="60" step="1" value="12" />
+      </section>
+
+      <section class="card">
+        <h2>Reveal on hover</h2>
+        <label class="check">
+          <input type="checkbox" id="reveal-on-hover" />
+          <span>Show an image sharply while the pointer is over it</span>
+        </label>
+        <p class="muted">When this is off, blurred media stays blurred no matter where the pointer goes.</p>
+      </section>
+
+      <section class="card">
+        <h2>Excluded sites</h2>
+        <p class="muted">Nothing is blurred on these hosts. A host also covers its sub domains, so <code>example.com</code> covers <code>images.example.com</code>.</p>
+        <form id="add-form" class="add-row">
+          <input type="text" id="site-input" placeholder="example.com" spellcheck="false" autocomplete="off" />
+          <button type="submit">Add</button>
+        </form>
+        <p id="add-error" class="error" hidden>Enter a host name such as example.com</p>
+        <ul id="site-list" class="sites"></ul>
+        <p id="empty-note" class="muted">No excluded sites yet.</p>
+      </section>
+
+      <footer>
+        <button type="button" id="reset" class="ghost">Reset all settings</button>
+        <span id="status" class="status" role="status"></span>
+      </footer>
+    </main>
+
+    <script src="../common/defaults.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

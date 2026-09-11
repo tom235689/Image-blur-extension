@@ -1,0 +1,88 @@
+/*
+ * Injected at document_start in every frame, so media is already blurred
+ * before the first paint. Blurring is the default state of this sheet: the
+ * content script only has to switch the modifier classes on <html> once the
+ * stored settings have been read, which means a slow storage read can never
+ * flash an unblurred image.
+ *
+ * ibx-off   - extension disabled, or the current host is on the exception list
+ * ibx-hover - reveal the element the pointer is over
+ *
+ * Elements carrying a CSS background image are tagged by the content script:
+ * ibx-bg-direct  - no text inside, so the element itself can be blurred
+ * ibx-bg-overlay - has text, so only a blurred copy of the background is drawn
+ * ibx-bg-anchor  - statically positioned overlay host that needs a containing block
+ * ibx-vector     - inline <svg> large enough to be artwork rather than an icon
+ */
+
+:root {
+  --ibx-blur-radius: 12px;
+}
+
+img,
+video,
+canvas,
+object[type^="image/"],
+embed[type^="image/"],
+.ibx-vector,
+.ibx-bg-direct {
+  filter: blur(var(--ibx-blur-radius)) !important;
+}
+
+.ibx-bg-anchor {
+  position: relative !important;
+}
+
+/*
+ * A blurred copy of the host's own background, painted above that background
+ * (step 1 of the painting order) but below the text content, which keeps
+ * captions on hero banners readable.
+ *
+ * Blurring fades the edges of a box into transparency, which would let the
+ * sharp original show through around the border. The overlay is therefore
+ * grown past the box so the fade happens outside it, then clipped back to the
+ * box - clipping runs after filtering, so nothing bleeds over the neighbours.
+ */
+.ibx-bg-overlay::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: calc(var(--ibx-blur-radius) * -2) !important;
+  z-index: -1 !important;
+  background: inherit !important;
+  filter: blur(var(--ibx-blur-radius)) !important;
+  clip-path: inset(calc(var(--ibx-blur-radius) * 2)) !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+html.ibx-hover img:hover,
+html.ibx-hover video:hover,
+html.ibx-hover canvas:hover,
+html.ibx-hover object[type^="image/"]:hover,
+html.ibx-hover embed[type^="image/"]:hover,
+html.ibx-hover .ibx-vector:hover,
+html.ibx-hover .ibx-bg-direct:hover {
+  filter: none !important;
+}
+
+html.ibx-hover .ibx-bg-overlay:hover::before {
+  opacity: 0 !important;
+}
+
+html.ibx-off img,
+html.ibx-off video,
+html.ibx-off canvas,
+html.ibx-off object[type^="image/"],
+html.ibx-off embed[type^="image/"],
+html.ibx-off .ibx-vector,
+html.ibx-off .ibx-bg-direct {
+  filter: none !important;
+}
+
+html.ibx-off .ibx-bg-anchor {
+  position: static !important;
+}
+
+html.ibx-off .ibx-bg-overlay::before {
+  display: none !important;
+}
