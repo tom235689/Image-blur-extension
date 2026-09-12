@@ -30,6 +30,7 @@ video,
 canvas,
 object[type^="image/"],
 embed[type^="image/"],
+input[type="image"],
 .ibx-vector,
 .ibx-bg-direct {
   filter: blur(var(--ibx-blur-radius)) !important;
@@ -79,6 +80,7 @@ html.ibx-hover video:hover,
 html.ibx-hover canvas:hover,
 html.ibx-hover object[type^="image/"]:hover,
 html.ibx-hover embed[type^="image/"]:hover,
+html.ibx-hover input[type="image"]:hover,
 html.ibx-hover .ibx-vector:hover,
 html.ibx-hover .ibx-bg-direct:hover {
   filter: none !important;
@@ -102,6 +104,7 @@ html.ibx-hover .ibx-bg-canvas:hover::before {
 :host-context(html.ibx-hover) canvas:hover,
 :host-context(html.ibx-hover) object[type^="image/"]:hover,
 :host-context(html.ibx-hover) embed[type^="image/"]:hover,
+:host-context(html.ibx-hover) input[type="image"]:hover,
 :host-context(html.ibx-hover) .ibx-vector:hover,
 :host-context(html.ibx-hover) .ibx-bg-direct:hover {
   filter: none !important;
@@ -117,6 +120,7 @@ html.ibx-off video,
 html.ibx-off canvas,
 html.ibx-off object[type^="image/"],
 html.ibx-off embed[type^="image/"],
+html.ibx-off input[type="image"],
 html.ibx-off .ibx-vector,
 html.ibx-off .ibx-bg-direct {
   filter: none !important;
@@ -141,6 +145,7 @@ html.ibx-off.ibx-bg-overlay::before {
 :host-context(html.ibx-off) canvas,
 :host-context(html.ibx-off) object[type^="image/"],
 :host-context(html.ibx-off) embed[type^="image/"],
+:host-context(html.ibx-off) input[type="image"],
 :host-context(html.ibx-off) .ibx-vector,
 :host-context(html.ibx-off) .ibx-bg-direct {
   filter: none !important;

@@ -65,6 +65,23 @@ each chunk reads style and layout first and writes its classes afterwards, so no
 element forces a synchronous reflow. A page of 8000 elements finishes about 1.2
 seconds after navigation starts.
 
+## Flutter web apps
+
+Flutter paints into `<flt-glass-pane>`, which carries an open shadow root, so
+the extension reaches a Flutter app only through the shadow root support
+described above. What actually gets blurred depends on the renderer the app was
+built with:
+
+| Renderer | What Flutter puts in the DOM | Result |
+| --- | --- | --- |
+| CanvasKit or skwasm (the default) | a single `<canvas>` the size of the view | the whole app is blurred, text included |
+| HTML (`--web-renderer html`, gone since Flutter 3.29) | `<img>` inside `<flt-picture>`, text as `<flt-paragraph>` | only the images are blurred, the app stays readable |
+
+Both were verified against a Flutter 3.22.2 build of the same app. With
+CanvasKit nothing can tell image pixels from text pixels inside the canvas, so
+blurring it is all or nothing. Two ways out: reveal on hover shows the app while
+the pointer is over it, and the app's host can go on the exception list.
+
 ## Known limits
 
 - Inline SVG smaller than 48x48 px is left sharp on purpose; blurring every icon
@@ -73,7 +90,12 @@ seconds after navigation starts.
   element that already uses `::before` has that pseudo element replaced by the
   blurred overlay.
 - Closed shadow roots (`attachShadow({ mode: 'closed' })`) are invisible to
-  extensions, so media inside them stays sharp.
+  extensions, so media inside them stays sharp. Open roots attached long after
+  their host was scanned are picked up by sweeps at 1, 3, 8 and 20 seconds after
+  load, so one attached later than that is missed.
+- A blur radius is measured in the element's own coordinates, so an image scaled
+  down by a CSS transform is blurred proportionally less than one sized by
+  width and height.
 - A background image on `<html>` or `<body>` is covered by a viewport sized copy
   that does not scroll with the page, so such a background looks fixed while it
   is blurred. Hovering never reveals it either, since the pointer is over

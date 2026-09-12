@@ -446,6 +446,43 @@
     schedule();
   }
 
+  /**
+   * A shadow root can be attached long after its host was scanned, and that
+   * attachment fires no mutation record anywhere. Hunting for unknown hosts is
+   * cheap - no style or layout is read - so it is repeated a few times on a
+   * widening interval instead of scanning the whole tree again.
+   */
+  function sweepShadowHosts() {
+    if (!active) {
+      return;
+    }
+
+    var elements;
+    try {
+      elements = document.querySelectorAll('*');
+    } catch (error) {
+      return;
+    }
+
+    var found = [];
+    for (var i = 0; i < elements.length; i += 1) {
+      var shadowRoot = elements[i].shadowRoot;
+      if (shadowRoot && !knownShadowRoots.has(shadowRoot)) {
+        found.push(shadowRoot);
+      }
+    }
+    for (var j = 0; j < found.length; j += 1) {
+      registerShadowRoot(found[j]);
+    }
+  }
+
+  function scheduleShadowSweeps() {
+    var delays = [1000, 3000, 8000, 20000];
+    for (var i = 0; i < delays.length; i += 1) {
+      setTimeout(sweepShadowHosts, delays[i]);
+    }
+  }
+
   function watchSettings() {
     try {
       chrome.storage.onChanged.addListener(function (changes, area) {
@@ -476,6 +513,7 @@
     window.addEventListener('load', function () {
       rescan();
       setTimeout(rescan, 1200);
+      scheduleShadowSweeps();
     }, true);
   }
 
