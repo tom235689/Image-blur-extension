@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>media types</title>
+    <style>
+      body { font: 14px system-ui; margin: 0; padding: 16px; background: #fff; color: #111 }
+      .case { margin: 10px 0; padding: 8px; border: 1px solid #ccc }
+      .bg-text { height: 120px; background-image: url("checker.png"); background-size: cover;
+                 color: #fff; font-weight: 700; text-shadow: 0 0 4px #000; padding: 8px }
+      .bg-plain { height: 120px; background-image: url("checker.png"); background-size: cover }
+      .gradient { height: 40px; background-image: linear-gradient(90deg, #f00, #00f) }
+    </style>
+  </head>
+  <body>
+    <h1>heading text, must stay sharp</h1>
+    <div class="case"><img id="photo" src="checker.png" width="120" height="120" /></div>
+    <div class="case"><div class="bg-text" id="banner">caption text must stay readable</div></div>
+    <div class="case"><div class="bg-plain" id="tile"></div></div>
+    <div class="case"><div class="gradient" id="gradient"></div></div>
+    <div class="case">
+      <svg id="artwork" width="120" height="120"><circle cx="60" cy="60" r="55" fill="#e11" /></svg>
+      <svg id="icon" width="24" height="24"><rect width="24" height="24" fill="#111" /></svg>
+    </div>
+    <div class="case"><canvas id="painting" width="120" height="120"></canvas></div>
+    <script>
+      const context = document.getElementById('painting').getContext('2d');
+      context.fillStyle = '#0a0';
+      context.fillRect(0, 0, 120, 120);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>frames and video</title>
+  </head>
+  <body>
+    <iframe id="same-origin" src="frame-inner.html" width="300" height="160"></iframe>
+    <iframe id="srcdoc" width="300" height="160"
+            srcdoc="<img id='inner-image' src='checker.png' width='60' height='60'>"></iframe>
+    <video id="clip" width="200" height="120" poster="checker.png"></video>
+    <div id="stable" style="height:80px;background-image:url('checker.png');color:#fff">
+      text keeps this element on the overlay path
+    </div>
+  </body>
+</html>

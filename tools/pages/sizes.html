@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>size limits</title>
+    <style>
+      body { margin: 0; padding: 20px; font: 14px system-ui }
+      .tile { background-image: url("checker.png"); background-size: cover; display: inline-block; margin: 4px }
+      .tile-small { width: 24px; height: 24px }
+      .tile-big { width: 150px; height: 150px }
+    </style>
+  </head>
+  <body>
+    <p>size limit probe</p>
+    <img id="tiny" src="checker.png" width="16" height="16" />
+    <img id="icon" src="checker.png" width="40" height="40" />
+    <img id="wide" src="checker.png" width="300" height="30" />
+    <img id="photo" src="checker.png" width="200" height="200" />
+    <canvas id="mini-canvas" width="20" height="20"></canvas>
+    <svg id="svg-icon" width="24" height="24"><rect width="24" height="24" fill="#111" /></svg>
+    <svg id="svg-artwork" width="120" height="120"><circle cx="60" cy="60" r="55" fill="#e11" /></svg>
+    <span class="tile tile-small" id="tile-small"></span>
+    <span class="tile tile-big" id="tile-big"></span>
+  </body>
+</html>

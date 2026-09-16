@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>late shadow root</title>
+  </head>
+  <body>
+    <div id="host"></div>
+    <input id="image-input" type="image" src="checker.png" width="120" height="120" />
+    <script>
+      // Attached well after the host was scanned, and attachShadow emits no
+      // mutation record, so only a sweep can find this one.
+      setTimeout(function () {
+        var root = document.getElementById('host').attachShadow({ mode: 'open' });
+        root.innerHTML = '<img id="late-image" src="checker.png" width="120" height="120">';
+      }, 4000);
+    </script>
+  </body>
+</html>

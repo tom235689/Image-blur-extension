@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>shadow dom</title>
+  </head>
+  <body>
+    <my-card id="card"></my-card>
+    <script>
+      class MyCard extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          root.innerHTML =
+            '<style>.tile{height:80px;background-image:url("checker.png");background-size:cover}</style>' +
+            '<img id="shadow-image" src="checker.png" width="60" height="60">' +
+            '<div class="tile" id="shadow-tile"></div>';
+        }
+      }
+      customElements.define('my-card', MyCard);
+    </script>
+  </body>
+</html>

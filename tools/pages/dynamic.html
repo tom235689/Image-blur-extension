@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>dynamic content</title>
+  </head>
+  <body>
+    <img id="anchor" src="checker.png" width="80" height="80" />
+    <canvas id="painting" width="80" height="80"></canvas>
+    <script>
+      // Elements inserted after the first scan, the way an endless feed does it.
+      window.addInserted = function () {
+        var box = document.createElement('div');
+        box.id = 'inserted-tile';
+        box.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:200px;' +
+          'background-image:url("checker.png");background-size:cover';
+        var image = document.createElement('img');
+        image.id = 'inserted-image';
+        image.src = 'checker.png';
+        image.width = 100;
+        image.height = 100;
+        box.appendChild(image);
+        document.body.appendChild(box);
+      };
+    </script>
+  </body>
+</html>
