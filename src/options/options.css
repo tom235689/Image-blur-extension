@@ -25,6 +25,11 @@
   box-sizing: border-box;
 }
 
+/* A display rule on a class would otherwise beat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 32px 20px 56px;
@@ -106,6 +111,15 @@ input[type="range"] {
   align-items: baseline;
   flex: none;
   gap: 6px;
+}
+
+.field-input select {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
 }
 
 .field-input input {

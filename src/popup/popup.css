@@ -23,6 +23,11 @@
   box-sizing: border-box;
 }
 
+/* A display rule on a class would otherwise beat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   width: 280px;
   margin: 0;
@@ -123,6 +128,52 @@ output {
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);
+}
+
+.row-site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.site-line {
+  min-width: 0;
+}
+
+.site-host {
+  display: block;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-pause {
+  padding-bottom: 12px;
+}
+
+.wide {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.wide:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.wide.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .is-off .row:not(.row-header) {

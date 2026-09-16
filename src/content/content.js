@@ -19,6 +19,7 @@
 
   var CLASS_OFF = 'ibx-off';
   var CLASS_HOVER = 'ibx-hover';
+  var CLASS_BLACKOUT = 'ibx-blackout';
   var CLASS_BG_DIRECT = 'ibx-bg-direct';
   var CLASS_BG_OVERLAY = 'ibx-bg-overlay';
   var CLASS_BG_ANCHOR = 'ibx-bg-anchor';
@@ -50,6 +51,9 @@
   var settings = api.DEFAULT_SETTINGS;
   var active = false;
   var scanning = false;
+  /** Set by the toolbar or the keyboard shortcut; gone as soon as the tab reloads. */
+  var paused = false;
+  var reportedOnce = false;
   var observer = null;
   var pending = new Set();
   var scheduled = false;
@@ -499,11 +503,13 @@
       return;
     }
 
-    active = settings.enabled && !api.isExcluded(currentHost(), settings.excludedSites);
+    active = settings.enabled && !paused && !api.isExcluded(currentHost(), settings.excludedSites);
 
     element.style.setProperty('--ibx-blur-radius', settings.blurAmount + 'px');
+    element.style.setProperty('--ibx-hover-delay', settings.hoverDelay + 'ms');
     element.classList.toggle(CLASS_OFF, !active);
     element.classList.toggle(CLASS_HOVER, active && settings.revealOnHover);
+    element.classList.toggle(CLASS_BLACKOUT, settings.mode === 'blackout');
 
     // Only a change of activation needs the tree walked again: the radius and
     // the hover mode are carried by the custom property and the classes above,
@@ -519,6 +525,51 @@
       // the one setting that does need everything measured again.
       rescan();
     }
+
+    reportState();
+  }
+
+  /**
+   * Tells the service worker what this tab looks like now, so the toolbar can
+   * show a badge for it. The first report after a load also says so, which is
+   * how a pause is dropped when the tab reloads.
+   */
+  function reportState() {
+    if (window.top !== window) {
+      return;
+    }
+    try {
+      chrome.runtime.sendMessage({
+        type: 'ibx-state',
+        host: currentHost(),
+        active: active,
+        paused: paused,
+        fresh: !reportedOnce
+      }, function () {
+        void chrome.runtime.lastError;
+      });
+      reportedOnce = true;
+    } catch (error) {
+      /* The extension was reloaded; the badge just stays as it was. */
+    }
+  }
+
+  function onExtensionMessage(message, sender, sendResponse) {
+    if (!message) {
+      return false;
+    }
+
+    // A pause covers the whole tab, so every frame gets told.
+    if (message.type === 'ibx-pause') {
+      paused = !!message.paused;
+      applySettings(settings);
+      return false;
+    }
+
+    if (message.type === 'ibx-query' && window.top === window) {
+      sendResponse({ host: currentHost(), active: active, paused: paused });
+    }
+    return false;
   }
 
   function sizeLimitsChanged(previous, next) {
@@ -578,6 +629,7 @@
         }
         api.readSettings().then(applySettings);
       });
+      chrome.runtime.onMessage.addListener(onExtensionMessage);
     } catch (error) {
       /* The extension was reloaded; this frame keeps its current state. */
     }

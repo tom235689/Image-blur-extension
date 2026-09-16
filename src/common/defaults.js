@@ -12,11 +12,17 @@
   var BLUR_MAX = 60;
   var SIZE_MIN = 0;
   var SIZE_MAX = 256;
+  var HOVER_DELAY_MAX = 2000;
+  var MODES = ['blur', 'blackout'];
 
   var DEFAULT_SETTINGS = {
     enabled: true,
     blurAmount: 12,
     revealOnHover: true,
+    /** How long the pointer must rest on something before it is revealed. */
+    hoverDelay: 300,
+    /** blur softens the image; blackout replaces it with a dark block. */
+    mode: 'blur',
     /** Raster media smaller than this in both directions is left sharp. 0 blurs everything. */
     minImageSize: 0,
     /** Inline SVG smaller than this in both directions is left sharp: interface icons. */
@@ -30,6 +36,11 @@
       return DEFAULT_SETTINGS.blurAmount;
     }
     return Math.min(BLUR_MAX, Math.max(BLUR_MIN, Math.round(amount)));
+  }
+
+  function clampNumber(value, fallback) {
+    var number = Number(value);
+    return isFinite(number) ? Math.round(number) : fallback;
   }
 
   function clampSize(value, fallback) {
@@ -83,6 +94,8 @@
       enabled: source.enabled !== false,
       blurAmount: clampBlur(source.blurAmount),
       revealOnHover: source.revealOnHover !== false,
+      hoverDelay: Math.min(HOVER_DELAY_MAX, Math.max(0, clampNumber(source.hoverDelay, DEFAULT_SETTINGS.hoverDelay))),
+      mode: MODES.indexOf(source.mode) === -1 ? DEFAULT_SETTINGS.mode : source.mode,
       minImageSize: clampSize(source.minImageSize, DEFAULT_SETTINGS.minImageSize),
       minVectorSize: clampSize(source.minVectorSize, DEFAULT_SETTINGS.minVectorSize),
       excludedSites: normalizeSiteList(source.excludedSites)
@@ -155,6 +168,8 @@
     BLUR_MAX: BLUR_MAX,
     SIZE_MIN: SIZE_MIN,
     SIZE_MAX: SIZE_MAX,
+    HOVER_DELAY_MAX: HOVER_DELAY_MAX,
+    MODES: MODES,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     clampBlur: clampBlur,
     clampSize: clampSize,

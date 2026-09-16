@@ -22,6 +22,20 @@
       </section>
 
       <section class="card">
+        <h2>How images are hidden</h2>
+        <div class="field">
+          <label for="mode">Effect</label>
+          <span class="field-input">
+            <select id="mode">
+              <option value="blur">Blur</option>
+              <option value="blackout">Blackout</option>
+            </select>
+          </span>
+        </div>
+        <p class="muted">Blur softens the image and keeps its colours; blackout blurs it and then drops it to black, which leaves nothing to read at any strength.</p>
+      </section>
+
+      <section class="card">
         <h2>Size limits</h2>
         <p class="muted">Anything smaller than its limit in <em>both</em> directions is left sharp. Set a limit to 0 to blur every size.</p>
         <div class="field">
@@ -47,6 +61,14 @@
           <span>Show an image sharply while the pointer is over it</span>
         </label>
         <p class="muted">When this is off, blurred media stays blurred no matter where the pointer goes.</p>
+        <div class="field">
+          <label for="hover-delay">Wait before revealing</label>
+          <span class="field-input">
+            <input type="number" id="hover-delay" min="0" max="2000" step="50" value="300" />
+            <span class="unit">ms</span>
+          </span>
+        </div>
+        <p class="muted">Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.</p>
       </section>
 
       <section class="card">

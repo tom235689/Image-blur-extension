@@ -9,6 +9,8 @@
   var hoverInput = document.getElementById('reveal-on-hover');
   var minImageInput = document.getElementById('min-image-size');
   var minVectorInput = document.getElementById('min-vector-size');
+  var modeInput = document.getElementById('mode');
+  var hoverDelayInput = document.getElementById('hover-delay');
   var addForm = document.getElementById('add-form');
   var siteInput = document.getElementById('site-input');
   var addError = document.getElementById('add-error');
@@ -33,6 +35,8 @@
     entry.element.min = String(api.SIZE_MIN);
     entry.element.max = String(api.SIZE_MAX);
   });
+
+  hoverDelayInput.max = String(api.HOVER_DELAY_MAX);
 
   function flashStatus(message) {
     statusLabel.textContent = message;
@@ -84,6 +88,8 @@
     hoverInput.checked = settings.revealOnHover;
     minImageInput.value = String(settings.minImageSize);
     minVectorInput.value = String(settings.minVectorSize);
+    modeInput.value = settings.mode;
+    hoverDelayInput.value = String(settings.hoverDelay);
     excluded = settings.excludedSites.slice();
     renderSites();
   }
@@ -106,6 +112,16 @@
 
   hoverInput.addEventListener('change', function () {
     save({ revealOnHover: hoverInput.checked });
+  });
+
+  modeInput.addEventListener('change', function () {
+    save({ mode: modeInput.value });
+  });
+
+  hoverDelayInput.addEventListener('change', function () {
+    var delay = api.normalizeSettings({ hoverDelay: hoverDelayInput.value }).hoverDelay;
+    hoverDelayInput.value = String(delay);
+    save({ hoverDelay: delay });
   });
 
   // Written on commit rather than on every keystroke: each change makes every

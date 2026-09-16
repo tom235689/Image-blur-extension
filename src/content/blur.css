@@ -23,6 +23,13 @@
 
 :root {
   --ibx-blur-radius: 12px;
+  --ibx-hover-delay: 0ms;
+  /* Swapped wholesale by the blackout mode, so no rule below needs to know. */
+  --ibx-effect: blur(var(--ibx-blur-radius));
+}
+
+html.ibx-blackout {
+  --ibx-effect: blur(var(--ibx-blur-radius)) brightness(0);
 }
 
 img,
@@ -33,7 +40,7 @@ embed[type^="image/"],
 input[type="image"],
 .ibx-vector,
 .ibx-bg-direct {
-  filter: blur(var(--ibx-blur-radius)) !important;
+  filter: var(--ibx-effect) !important;
 }
 
 /*
@@ -66,10 +73,10 @@ input[type="image"],
   inset: calc(var(--ibx-blur-radius) * -2) !important;
   z-index: -1 !important;
   background: inherit !important;
-  filter: blur(var(--ibx-blur-radius)) !important;
+  filter: var(--ibx-effect) !important;
   clip-path: inset(calc(var(--ibx-blur-radius) * 2)) !important;
   pointer-events: none !important;
-  transition: none !important;
+  transition: opacity 0s 0s !important;
 }
 
 /*
@@ -84,6 +91,31 @@ input[type="image"],
   clip-path: inset(calc(var(--ibx-blur-radius) * 2)) !important;
 }
 
+/*
+ * Hover reveal timing. A transition takes its timing from the state being
+ * entered, so putting the delay on the :hover rule and none on the plain rule
+ * means the reveal waits and the blur comes straight back. Duration stays at
+ * zero, so nothing is ever half revealed.
+ */
+html.ibx-hover img,
+html.ibx-hover video,
+html.ibx-hover canvas,
+html.ibx-hover object[type^="image/"],
+html.ibx-hover embed[type^="image/"],
+html.ibx-hover input[type="image"],
+html.ibx-hover .ibx-vector,
+html.ibx-hover .ibx-bg-direct,
+:host-context(html.ibx-hover) img,
+:host-context(html.ibx-hover) video,
+:host-context(html.ibx-hover) canvas,
+:host-context(html.ibx-hover) object[type^="image/"],
+:host-context(html.ibx-hover) embed[type^="image/"],
+:host-context(html.ibx-hover) input[type="image"],
+:host-context(html.ibx-hover) .ibx-vector,
+:host-context(html.ibx-hover) .ibx-bg-direct {
+  transition: filter 0s 0s !important;
+}
+
 /* Reveal on hover - document tree. */
 html.ibx-hover img:hover,
 html.ibx-hover video:hover,
@@ -94,10 +126,12 @@ html.ibx-hover input[type="image"]:hover,
 html.ibx-hover .ibx-vector:hover,
 html.ibx-hover .ibx-bg-direct:hover {
   filter: none !important;
+  transition-delay: var(--ibx-hover-delay) !important;
 }
 
 html.ibx-hover .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
+  transition-delay: var(--ibx-hover-delay) !important;
 }
 
 /*
@@ -118,10 +152,12 @@ html.ibx-hover .ibx-bg-canvas:hover::before {
 :host-context(html.ibx-hover) .ibx-vector:hover,
 :host-context(html.ibx-hover) .ibx-bg-direct:hover {
   filter: none !important;
+  transition-delay: var(--ibx-hover-delay) !important;
 }
 
 :host-context(html.ibx-hover) .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
+  transition-delay: var(--ibx-hover-delay) !important;
 }
 
 /* Disabled or excluded - document tree. */

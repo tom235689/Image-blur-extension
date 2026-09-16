@@ -13,7 +13,14 @@ exception list are left untouched.
 
 ## Using it
 
-- **Toolbar popup** - master on/off switch and the blur strength slider.
+- **Toolbar popup** - master on/off switch, blur strength, a switch for the site
+  in front of you, and a pause button for the current tab.
+- **Keyboard shortcuts** - Alt+Shift+B turns blurring on or off, Alt+Shift+P
+  pauses it on the current tab. Both can be rebound at chrome://extensions/shortcuts.
+- **Pause on this tab** - a temporary reveal that lasts until the tab reloads,
+  for when the exception list would be too permanent.
+- **Effect** - blur softens the image; blackout blurs it and then drops it to
+  black, so there is nothing left to read at any strength.
 - **Options page** (link at the bottom of the popup) - size limits, reveal on
   hover, the excluded site list, and a reset button.
 - **Size limits** - anything smaller than its limit in *both* directions is left
@@ -21,8 +28,9 @@ exception list are left untouched.
   so every size is blurred; inline SVG starts at 48 px, because that is how most
   sites draw their interface icons. Either limit can be set anywhere from 0 to
   256 px.
-- **Reveal on hover** - on by default. While it is on, moving the pointer over a
-  blurred element shows it sharply; turn it off and blurred media stays blurred.
+- **Reveal on hover** - on by default, after a 300 ms wait so a pointer merely
+  passing through uncovers nothing. The cover comes back the moment the pointer
+  leaves. Turn it off and blurred media stays blurred.
 - **Excluded sites** - a host also covers its sub domains, so `example.com`
   covers `images.example.com`.
 
@@ -38,8 +46,9 @@ classes on `<html>`:
 
 | Class | Meaning |
 | --- | --- |
-| `ibx-off` | extension disabled, or this host is excluded |
+| `ibx-off` | extension disabled, this host is excluded, or this tab is paused |
 | `ibx-hover` | reveal the element under the pointer |
+| `ibx-blackout` | swap the blur for a blur plus brightness(0) |
 
 CSS selectors cannot ask "does this element have a background image?", so
 `src/content/content.js` walks the DOM in idle time chunks, reads the computed
@@ -88,6 +97,11 @@ CanvasKit nothing can tell image pixels from text pixels inside the canvas, so
 blurring it is all or nothing. Two ways out: reveal on hover shows the app while
 the pointer is over it, and the app's host can go on the exception list.
 
+## Tests
+
+`node tools/run-tests.js` drives a real Chrome with the extension loaded and
+checks what pages actually compute. See [tools/README.md](tools/README.md).
+
 ## Known limits
 
 - Size limits are decided on the painted box, so an element still loading or
@@ -123,6 +137,7 @@ src/content/blur.css          injected at document_start
 src/content/content.js        activation and element tagging
 src/popup/                    toolbar popup
 src/options/                  options page
-src/background/               service worker (defaults seeding, badge, stylesheet handover)
+src/background/               service worker (defaults, badges, pause, shortcuts, stylesheet)
+tools/                        browser driven test harness, see tools/README.md
 icons/
 ```

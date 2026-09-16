@@ -1,14 +1,26 @@
-/** Toolbar popup: master switch and blur strength. */
+/** Toolbar popup: master switch, blur strength, and what applies here. */
 (function () {
   'use strict';
 
   var api = globalThis.ImageBlur;
+
   var enabledInput = document.getElementById('enabled');
   var blurInput = document.getElementById('blur-amount');
   var blurValue = document.getElementById('blur-value');
   var stateLabel = document.getElementById('state-label');
   var optionsButton = document.getElementById('open-options');
+
+  var siteRow = document.getElementById('site-row');
+  var siteHost = document.getElementById('site-host');
+  var siteInput = document.getElementById('site-enabled');
+  var pauseRow = document.getElementById('pause-row');
+  var pauseButton = document.getElementById('pause-tab');
+  var unavailable = document.getElementById('unavailable');
+
   var writeTimer = 0;
+  var settings = api.DEFAULT_SETTINGS;
+  var tabId = null;
+  var host = '';
 
   blurInput.min = String(api.BLUR_MIN);
   blurInput.max = String(api.BLUR_MAX);
@@ -22,11 +34,37 @@
     stateLabel.textContent = enabled ? 'Blurring images on every site' : 'Blurring is turned off';
   }
 
-  function render(settings) {
+  function renderSettings(next) {
+    settings = next;
     enabledInput.checked = settings.enabled;
     blurInput.value = String(settings.blurAmount);
     renderBlurValue(settings.blurAmount);
     renderEnabled(settings.enabled);
+    if (host) {
+      siteInput.checked = !api.isExcluded(host, settings.excludedSites);
+    }
+  }
+
+  function renderTab(state) {
+    if (!state) {
+      unavailable.hidden = false;
+      return;
+    }
+
+    host = api.normalizeHost(state.host);
+    if (host) {
+      siteHost.textContent = host;
+      siteInput.checked = !api.isExcluded(host, settings.excludedSites);
+      siteRow.hidden = false;
+    }
+
+    pauseRow.hidden = false;
+    renderPaused(state.paused);
+  }
+
+  function renderPaused(paused) {
+    pauseButton.textContent = paused ? 'Resume on this tab' : 'Pause on this tab';
+    pauseButton.classList.toggle('is-active', !!paused);
   }
 
   function save(patch) {
@@ -55,6 +93,29 @@
     save({ blurAmount: api.clampBlur(blurInput.value) });
   });
 
+  siteInput.addEventListener('change', function () {
+    var list = settings.excludedSites.filter(function (entry) {
+      return entry !== host;
+    });
+    if (!siteInput.checked) {
+      list = api.normalizeSiteList(list.concat(host));
+    }
+    settings.excludedSites = list;
+    save({ excludedSites: list });
+  });
+
+  pauseButton.addEventListener('click', function () {
+    if (tabId === null) {
+      return;
+    }
+    chrome.runtime.sendMessage({ type: 'ibx-pause-toggle', tabId: tabId }, function (response) {
+      void chrome.runtime.lastError;
+      if (response) {
+        renderPaused(response.paused);
+      }
+    });
+  });
+
   optionsButton.addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
       chrome.runtime.openOptionsPage();
@@ -64,5 +125,29 @@
     window.close();
   });
 
-  api.readSettings().then(render);
+  /**
+   * The active tab's id comes from tabs.query, which needs no permission; the
+   * host comes from the content script itself rather than from the tab's URL,
+   * which would need the tabs permission. No content script, no answer - that
+   * is exactly the case where the extension cannot do anything anyway.
+   */
+  function loadTab() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      var tab = tabs && tabs[0];
+      if (!tab || typeof tab.id !== 'number') {
+        renderTab(null);
+        return;
+      }
+      tabId = tab.id;
+      chrome.tabs.sendMessage(tab.id, { type: 'ibx-query' }, function (response) {
+        void chrome.runtime.lastError;
+        renderTab(response || null);
+      });
+    });
+  }
+
+  api.readSettings().then(function (next) {
+    renderSettings(next);
+    loadTab();
+  });
 })();

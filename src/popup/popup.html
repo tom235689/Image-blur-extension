@@ -26,6 +26,24 @@
         <input type="range" id="blur-amount" min="2" max="60" step="1" value="12" />
       </section>
 
+      <section class="row row-site" id="site-row" hidden>
+        <div class="site-line">
+          <span class="muted">This site</span>
+          <span class="site-host" id="site-host"></span>
+        </div>
+        <label class="switch" title="Blur images on this site">
+          <input type="checkbox" id="site-enabled" />
+          <span class="track"><span class="thumb"></span></span>
+        </label>
+      </section>
+
+      <section class="row row-pause" id="pause-row" hidden>
+        <button type="button" id="pause-tab" class="wide">Pause on this tab</button>
+        <p class="muted" id="pause-note">Until the tab is reloaded. Shortcut: Alt+Shift+P</p>
+      </section>
+
+      <p class="muted" id="unavailable" hidden>Image Blur cannot run on this page.</p>
+
       <button type="button" id="open-options" class="link">Excluded sites and more settings</button>
     </main>
 
