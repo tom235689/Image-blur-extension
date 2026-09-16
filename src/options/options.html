@@ -22,6 +22,25 @@
       </section>
 
       <section class="card">
+        <h2>Size limits</h2>
+        <p class="muted">Anything smaller than its limit in <em>both</em> directions is left sharp. Set a limit to 0 to blur every size.</p>
+        <div class="field">
+          <label for="min-image-size">Images, videos, canvases and background images</label>
+          <span class="field-input">
+            <input type="number" id="min-image-size" min="0" max="256" step="1" value="0" />
+            <span class="unit">px</span>
+          </span>
+        </div>
+        <div class="field">
+          <label for="min-vector-size">Inline SVG <span class="muted">- most sites draw their interface icons this way</span></label>
+          <span class="field-input">
+            <input type="number" id="min-vector-size" min="0" max="256" step="1" value="48" />
+            <span class="unit">px</span>
+          </span>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>Reveal on hover</h2>
         <label class="check">
           <input type="checkbox" id="reveal-on-hover" />

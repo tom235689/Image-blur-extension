@@ -7,6 +7,8 @@
   var blurInput = document.getElementById('blur-amount');
   var blurValue = document.getElementById('blur-value');
   var hoverInput = document.getElementById('reveal-on-hover');
+  var minImageInput = document.getElementById('min-image-size');
+  var minVectorInput = document.getElementById('min-vector-size');
   var addForm = document.getElementById('add-form');
   var siteInput = document.getElementById('site-input');
   var addError = document.getElementById('add-error');
@@ -21,6 +23,16 @@
 
   blurInput.min = String(api.BLUR_MIN);
   blurInput.max = String(api.BLUR_MAX);
+
+  var sizeInputs = [
+    { element: minImageInput, key: 'minImageSize' },
+    { element: minVectorInput, key: 'minVectorSize' }
+  ];
+
+  sizeInputs.forEach(function (entry) {
+    entry.element.min = String(api.SIZE_MIN);
+    entry.element.max = String(api.SIZE_MAX);
+  });
 
   function flashStatus(message) {
     statusLabel.textContent = message;
@@ -70,6 +82,8 @@
     blurInput.value = String(settings.blurAmount);
     blurValue.textContent = settings.blurAmount + ' px';
     hoverInput.checked = settings.revealOnHover;
+    minImageInput.value = String(settings.minImageSize);
+    minVectorInput.value = String(settings.minVectorSize);
     excluded = settings.excludedSites.slice();
     renderSites();
   }
@@ -92,6 +106,18 @@
 
   hoverInput.addEventListener('change', function () {
     save({ revealOnHover: hoverInput.checked });
+  });
+
+  // Written on commit rather than on every keystroke: each change makes every
+  // open tab measure its elements again.
+  sizeInputs.forEach(function (entry) {
+    entry.element.addEventListener('change', function () {
+      var size = api.clampSize(entry.element.value, api.DEFAULT_SETTINGS[entry.key]);
+      entry.element.value = String(size);
+      var patch = {};
+      patch[entry.key] = size;
+      save(patch);
+    });
   });
 
   addForm.addEventListener('submit', function (event) {

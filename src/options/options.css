@@ -88,6 +88,42 @@ input[type="range"] {
   accent-color: var(--accent);
 }
 
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.field label {
+  flex: 1;
+}
+
+.field-input {
+  display: flex;
+  align-items: baseline;
+  flex: none;
+  gap: 6px;
+}
+
+.field-input input {
+  width: 76px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  text-align: right;
+}
+
+.unit {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .check {
   display: flex;
   align-items: center;

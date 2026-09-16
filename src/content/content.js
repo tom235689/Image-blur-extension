@@ -24,11 +24,13 @@
   var CLASS_BG_ANCHOR = 'ibx-bg-anchor';
   var CLASS_BG_CANVAS = 'ibx-bg-canvas';
   var CLASS_VECTOR = 'ibx-vector';
+  var CLASS_SMALL = 'ibx-small';
 
-  /** Inline SVG below this size is treated as UI chrome (icons, arrows, logos). */
-  var VECTOR_MIN_SIZE = 48;
   /** How long one scanning chunk may block the main thread. */
   var FRAME_BUDGET_MS = 8;
+
+  /** Replaced media that blur.css blurs on sight, and that a size limit can exempt. */
+  var MEDIA_TAGS = { IMG: 1, VIDEO: 1, CANVAS: 1, OBJECT: 1, EMBED: 1, INPUT: 1 };
 
   var BACKGROUND_IMAGE_PATTERN = /url\(|image-set\(/i;
 
@@ -51,6 +53,7 @@
   var observer = null;
   var pending = new Set();
   var scheduled = false;
+  var resizeTimer = 0;
 
   var shadowSheet = null;
   var shadowSheetRequested = false;
@@ -194,23 +197,56 @@
     return !!text && /\S/.test(text);
   }
 
-  function markVector(element, style, ops) {
-    if (style.display === 'none' || style.visibility === 'hidden') {
-      queueClass(ops, element, CLASS_VECTOR, false);
-      return;
+  function isHidden(style) {
+    return style.display === 'none' || style.visibility === 'hidden';
+  }
+
+  /**
+   * Whether the element is small enough to count as an interface icon rather
+   * than content: smaller than the limit in both directions. An element that
+   * has no box yet - an image still loading, a lazy section - is never called
+   * small, so it stays blurred until it has a real size.
+   */
+  function isBelowSize(element, limit) {
+    if (limit <= 0) {
+      return false;
     }
     var rect;
     try {
       rect = element.getBoundingClientRect();
     } catch (error) {
+      return false;
+    }
+    return rect.width > 0 && rect.height > 0 && rect.width < limit && rect.height < limit;
+  }
+
+  function markVector(element, style, ops) {
+    if (isHidden(style)) {
+      queueClass(ops, element, CLASS_VECTOR, false);
       return;
     }
-    queueClass(ops, element, CLASS_VECTOR, rect.width >= VECTOR_MIN_SIZE && rect.height >= VECTOR_MIN_SIZE);
+    queueClass(ops, element, CLASS_VECTOR, !isBelowSize(element, settings.minVectorSize));
+  }
+
+  /**
+   * blur.css blurs replaced media on sight, so the size limit works the other
+   * way round here: anything below it is tagged and has its blur taken off.
+   */
+  function markSmallMedia(element, style, ops) {
+    var exempt = !isHidden(style) && isBelowSize(element, settings.minImageSize);
+    queueClass(ops, element, CLASS_SMALL, exempt);
   }
 
   function markBackground(element, upper, style, ops) {
     var image = style.backgroundImage;
     var hasImage = !!image && image !== 'none' && BACKGROUND_IMAGE_PATTERN.test(image);
+
+    // Icon sized boxes - sprite sheets, bullets, flags - fall under the same
+    // size limit as replaced media, except for the page background, which is
+    // measured against the viewport rather than a box of its own.
+    if (hasImage && upper !== 'HTML' && upper !== 'BODY' && isBelowSize(element, settings.minImageSize)) {
+      hasImage = false;
+    }
 
     if (!hasImage) {
       queueClass(ops, element, CLASS_BG_DIRECT, false);
@@ -281,6 +317,8 @@
 
     if (upper === 'SVG') {
       markVector(element, style, ops);
+    } else if (MEDIA_TAGS[upper] === 1) {
+      markSmallMedia(element, style, ops);
     }
     markBackground(element, upper, style, ops);
   }
@@ -312,6 +350,31 @@
 
     for (var i = 0; i < descendants.length; i += 1) {
       pending.add(descendants[i]);
+    }
+  }
+
+  /**
+   * Queues a tree together with every open shadow tree inside it. Used when a
+   * whole pass has to be redone, since querySelectorAll stops at a shadow
+   * boundary.
+   */
+  function enqueueDeep(node) {
+    enqueueTree(node);
+
+    var elements;
+    try {
+      elements = node.querySelectorAll ? node.querySelectorAll('*') : null;
+    } catch (error) {
+      return;
+    }
+    if (!elements) {
+      return;
+    }
+
+    for (var i = 0; i < elements.length; i += 1) {
+      if (elements[i].shadowRoot) {
+        enqueueDeep(elements[i].shadowRoot);
+      }
     }
   }
 
@@ -393,6 +456,20 @@
     schedule();
   }
 
+  /**
+   * An image has no size until it has loaded, and the size limits are decided
+   * on the painted box, so every media element is measured again once its
+   * resource arrives. Load events do not bubble; the capture phase sees them.
+   */
+  function onResourceLoad(event) {
+    var target = event.target;
+    if (!active || !target || target.nodeType !== 1 || MEDIA_TAGS[target.tagName.toUpperCase()] !== 1) {
+      return;
+    }
+    pending.add(target);
+    schedule();
+  }
+
   function startScanning() {
     if (!observer) {
       observer = new MutationObserver(onMutations);
@@ -402,7 +479,7 @@
     } catch (error) {
       /* Nothing to observe yet; the readyState listeners will retry. */
     }
-    enqueueTree(root());
+    enqueueDeep(root());
     schedule();
   }
 
@@ -414,7 +491,9 @@
   }
 
   function applySettings(next) {
+    var previous = settings;
     settings = next;
+
     var element = root();
     if (!element) {
       return;
@@ -435,14 +514,22 @@
     } else if (!active && scanning) {
       scanning = false;
       stopScanning();
+    } else if (active && sizeLimitsChanged(previous, settings)) {
+      // The limits are decided per element while scanning, so changing one is
+      // the one setting that does need everything measured again.
+      rescan();
     }
+  }
+
+  function sizeLimitsChanged(previous, next) {
+    return previous.minImageSize !== next.minImageSize || previous.minVectorSize !== next.minVectorSize;
   }
 
   function rescan() {
     if (!active) {
       return;
     }
-    enqueueTree(root());
+    enqueueDeep(root());
     schedule();
   }
 
@@ -507,6 +594,17 @@
 
     document.addEventListener('DOMContentLoaded', rescan, true);
     document.addEventListener('mouseover', onPointerEnter, { capture: true, passive: true });
+    document.addEventListener('load', onResourceLoad, { capture: true, passive: true });
+
+    // A responsive layout can push an element across a size limit, but only if
+    // there is a limit to cross.
+    window.addEventListener('resize', function () {
+      if (!settings.minImageSize && !settings.minVectorSize) {
+        return;
+      }
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(rescan, 400);
+    }, { passive: true });
     // Late stylesheets and lazily loaded sections can introduce background
     // images without touching an observed attribute, so sweep again once the
     // page has settled.

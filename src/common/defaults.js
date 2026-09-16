@@ -10,11 +10,17 @@
 
   var BLUR_MIN = 2;
   var BLUR_MAX = 60;
+  var SIZE_MIN = 0;
+  var SIZE_MAX = 256;
 
   var DEFAULT_SETTINGS = {
     enabled: true,
     blurAmount: 12,
     revealOnHover: true,
+    /** Raster media smaller than this in both directions is left sharp. 0 blurs everything. */
+    minImageSize: 0,
+    /** Inline SVG smaller than this in both directions is left sharp: interface icons. */
+    minVectorSize: 48,
     excludedSites: []
   };
 
@@ -24,6 +30,14 @@
       return DEFAULT_SETTINGS.blurAmount;
     }
     return Math.min(BLUR_MAX, Math.max(BLUR_MIN, Math.round(amount)));
+  }
+
+  function clampSize(value, fallback) {
+    var size = Number(value);
+    if (!isFinite(size)) {
+      return fallback;
+    }
+    return Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(size)));
   }
 
   /**
@@ -69,6 +83,8 @@
       enabled: source.enabled !== false,
       blurAmount: clampBlur(source.blurAmount),
       revealOnHover: source.revealOnHover !== false,
+      minImageSize: clampSize(source.minImageSize, DEFAULT_SETTINGS.minImageSize),
+      minVectorSize: clampSize(source.minVectorSize, DEFAULT_SETTINGS.minVectorSize),
       excludedSites: normalizeSiteList(source.excludedSites)
     };
   }
@@ -137,8 +153,11 @@
   global.ImageBlur = {
     BLUR_MIN: BLUR_MIN,
     BLUR_MAX: BLUR_MAX,
+    SIZE_MIN: SIZE_MIN,
+    SIZE_MAX: SIZE_MAX,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     clampBlur: clampBlur,
+    clampSize: clampSize,
     normalizeHost: normalizeHost,
     normalizeSiteList: normalizeSiteList,
     normalizeSettings: normalizeSettings,

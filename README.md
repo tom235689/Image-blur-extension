@@ -14,8 +14,13 @@ exception list are left untouched.
 ## Using it
 
 - **Toolbar popup** - master on/off switch and the blur strength slider.
-- **Options page** (link at the bottom of the popup) - reveal on hover, the
-  excluded site list, and a reset button.
+- **Options page** (link at the bottom of the popup) - size limits, reveal on
+  hover, the excluded site list, and a reset button.
+- **Size limits** - anything smaller than its limit in *both* directions is left
+  sharp. Raster media (images, videos, canvases, background images) starts at 0,
+  so every size is blurred; inline SVG starts at 48 px, because that is how most
+  sites draw their interface icons. Either limit can be set anywhere from 0 to
+  256 px.
 - **Reveal on hover** - on by default. While it is on, moving the pointer over a
   blurred element shows it sharply; turn it off and blurred media stays blurred.
 - **Excluded sites** - a host also covers its sub domains, so `example.com`
@@ -46,7 +51,8 @@ style and tags what it finds:
 | `ibx-bg-overlay` | background image plus text - a blurred copy of the background is drawn behind the text |
 | `ibx-bg-anchor` | overlay host that needed `position: relative` |
 | `ibx-bg-canvas` | `<html>` or `<body>`, whose background is painted across the whole viewport |
-| `ibx-vector` | inline `<svg>` of at least 48x48 px |
+| `ibx-vector` | inline `<svg>` at or above the vector size limit |
+| `ibx-small` | media below the raster size limit, whose blur is taken off again |
 
 A document stylesheet does not reach inside a shadow tree, so every open shadow
 root that turns up gets the same sheet adopted into it (the service worker hands
@@ -84,8 +90,10 @@ the pointer is over it, and the app's host can go on the exception list.
 
 ## Known limits
 
-- Inline SVG smaller than 48x48 px is left sharp on purpose; blurring every icon
-  makes most sites unusable.
+- Size limits are decided on the painted box, so an element still loading or
+  laid out at zero size counts as too big rather than too small and stays
+  blurred. Media is measured again when its resource loads, when the window is
+  resized and when the pointer enters it.
 - Background images declared on `::before` / `::after` cannot be detected, and an
   element that already uses `::before` has that pseudo element replaced by the
   blurred overlay.

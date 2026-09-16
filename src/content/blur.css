@@ -36,6 +36,16 @@ input[type="image"],
   filter: blur(var(--ibx-blur-radius)) !important;
 }
 
+/*
+ * Media the content script measured as smaller than the configured minimum in
+ * both directions: an interface icon rather than content. Tagging works this
+ * way round because the rule above blurs replaced media on sight, before
+ * anything has been measured.
+ */
+.ibx-small {
+  filter: none !important;
+}
+
 .ibx-bg-anchor {
   position: relative !important;
 }
