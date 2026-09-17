@@ -48,8 +48,16 @@ input[type="image"],
  * both directions: an interface icon rather than content. Tagging works this
  * way round because the rule above blurs replaced media on sight, before
  * anything has been measured.
+ *
+ * The class is repeated on purpose. Most of the rule above is a bare tag, which
+ * one class outranks, but input[type="image"], object[type^="image/"] and
+ * embed[type^="image/"] are a tag plus an attribute, which outranks one class
+ * in turn - !important does not break that tie, it only decides which cascade
+ * layer wins. A single .ibx-small would therefore lose to exactly those three,
+ * and the size limit would quietly do nothing for image buttons and image
+ * objects. Two classes outrank all of them.
  */
-.ibx-small {
+.ibx-small.ibx-small {
   filter: none !important;
 }
 

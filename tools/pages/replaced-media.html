@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>replaced media</title>
+    <style>
+      body { font: 14px system-ui; margin: 0; padding: 16px; background: #fff; color: #111 }
+      .case { margin: 10px 0; padding: 8px; border: 1px solid #ccc }
+      /* Fixed boxes, so a size limit lands on the same side of every element. */
+      #text-field { width: 150px; height: 24px; box-sizing: border-box }
+      #html-object { width: 150px; height: 100px }
+    </style>
+  </head>
+  <body>
+    <h1>tags that only sometimes hold an image</h1>
+
+    <div class="case">
+      <input type="image" id="image-button" src="checker.png" width="120" height="120" alt="image button" />
+    </div>
+
+    <div class="case">
+      <input type="text" id="text-field" value="an input that is not an image" />
+    </div>
+
+    <div class="case">
+      <object id="image-object" type="image/png" data="checker.png" width="120" height="120"></object>
+    </div>
+
+    <div class="case">
+      <object id="html-object" type="text/html" data="frame-inner.html"></object>
+    </div>
+  </body>
+</html>

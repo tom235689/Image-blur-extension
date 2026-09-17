@@ -30,7 +30,7 @@
   /** How long one scanning chunk may block the main thread. */
   var FRAME_BUDGET_MS = 8;
 
-  /** Replaced media that blur.css blurs on sight, and that a size limit can exempt. */
+  /** Tags worth measuring: every element blur.css can blur as replaced media. */
   var MEDIA_TAGS = { IMG: 1, VIDEO: 1, CANVAS: 1, OBJECT: 1, EMBED: 1, INPUT: 1 };
 
   var BACKGROUND_IMAGE_PATTERN = /url\(|image-set\(/i;
@@ -233,11 +233,35 @@
   }
 
   /**
+   * Whether blur.css actually blurs this element, which mirrors its selectors:
+   * only an image button among inputs, and only image content among objects and
+   * embeds. A tag alone is not enough - <input type="text"> and an <object>
+   * holding a PDF share their tag with blurred media but are never blurred, and
+   * tagging them would put a class on a page element for no reason.
+   */
+  function isBlurredMedia(element, upper) {
+    if (upper === 'IMG' || upper === 'VIDEO' || upper === 'CANVAS') {
+      return true;
+    }
+    if (upper === 'INPUT') {
+      // The IDL attribute is already lower case and defaults to "text".
+      return element.type === 'image';
+    }
+    // CSS matches the type attribute case insensitively here, so this does too.
+    var type = element.getAttribute && element.getAttribute('type');
+    return !!type && type.toLowerCase().indexOf('image/') === 0;
+  }
+
+  /**
    * blur.css blurs replaced media on sight, so the size limit works the other
    * way round here: anything below it is tagged and has its blur taken off.
+   * Anything the stylesheet never blurs is never tagged, and the same check
+   * clears a stale class from an element that has stopped being an image.
    */
-  function markSmallMedia(element, style, ops) {
-    var exempt = !isHidden(style) && isBelowSize(element, settings.minImageSize);
+  function markSmallMedia(element, upper, style, ops) {
+    var exempt = isBlurredMedia(element, upper)
+      && !isHidden(style)
+      && isBelowSize(element, settings.minImageSize);
     queueClass(ops, element, CLASS_SMALL, exempt);
   }
 
@@ -322,7 +346,7 @@
     if (upper === 'SVG') {
       markVector(element, style, ops);
     } else if (MEDIA_TAGS[upper] === 1) {
-      markSmallMedia(element, style, ops);
+      markSmallMedia(element, upper, style, ops);
     }
     markBackground(element, upper, style, ops);
   }
