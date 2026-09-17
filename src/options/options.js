@@ -3,6 +3,16 @@
   'use strict';
 
   var api = globalThis.ImageBlur;
+  var i18n = globalThis.ImageBlurI18n;
+
+  // Translates everything the markup declares; the strings built below - the
+  // ones that name a host - go through label() instead.
+  i18n.apply(document);
+
+  /** A translated string, falling back to the English wording when it is missing. */
+  function label(key, substitutions, fallback) {
+    return i18n.message(key, substitutions) || fallback;
+  }
 
   var blurInput = document.getElementById('blur-amount');
   var blurValue = document.getElementById('blur-value');
@@ -48,7 +58,9 @@
 
   function save(patch, message) {
     api.writeSettings(patch).then(function (ok) {
-      flashStatus(ok ? (message || 'Saved') : 'Could not save');
+      flashStatus(ok
+        ? (message || label('statusSaved', null, 'Saved'))
+        : label('statusSaveFailed', null, 'Could not save'));
     });
   }
 
@@ -66,14 +78,14 @@
       var remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'remove';
-      remove.textContent = 'Remove';
-      remove.setAttribute('aria-label', 'Remove ' + host);
+      remove.textContent = label('optionsSitesRemove', null, 'Remove');
+      remove.setAttribute('aria-label', label('optionsSitesRemoveLabel', [host], 'Remove ' + host));
       remove.addEventListener('click', function () {
         excluded = excluded.filter(function (entry) {
           return entry !== host;
         });
         renderSites();
-        save({ excludedSites: excluded }, 'Removed ' + host);
+        save({ excludedSites: excluded }, label('statusSiteRemoved', [host], 'Removed ' + host));
       });
 
       item.appendChild(name);
@@ -84,7 +96,7 @@
 
   function render(settings) {
     blurInput.value = String(settings.blurAmount);
-    blurValue.textContent = settings.blurAmount + ' px';
+    blurValue.textContent = i18n.pixels(settings.blurAmount);
     hoverInput.checked = settings.revealOnHover;
     minImageInput.value = String(settings.minImageSize);
     minVectorInput.value = String(settings.minVectorSize);
@@ -98,7 +110,7 @@
   // released value always written in full.
   blurInput.addEventListener('input', function () {
     var amount = api.clampBlur(blurInput.value);
-    blurValue.textContent = amount + ' px';
+    blurValue.textContent = i18n.pixels(amount);
     clearTimeout(writeTimer);
     writeTimer = setTimeout(function () {
       save({ blurAmount: amount });
@@ -149,13 +161,13 @@
     siteInput.value = '';
 
     if (excluded.indexOf(host) !== -1) {
-      flashStatus(host + ' is already excluded');
+      flashStatus(label('statusSiteDuplicate', [host], host + ' is already excluded'));
       return;
     }
 
     excluded = api.normalizeSiteList(excluded.concat(host));
     renderSites();
-    save({ excludedSites: excluded }, 'Added ' + host);
+    save({ excludedSites: excluded }, label('statusSiteAdded', [host], 'Added ' + host));
   });
 
   siteInput.addEventListener('input', function () {
@@ -163,13 +175,15 @@
   });
 
   resetButton.addEventListener('click', function () {
-    if (!window.confirm('Reset every Image Blur setting to its default?')) {
+    if (!window.confirm(label('optionsResetConfirm', null, 'Reset every Image Blur setting to its default?'))) {
       return;
     }
     var defaults = api.normalizeSettings(null);
     api.writeSettings(defaults).then(function (ok) {
       render(defaults);
-      flashStatus(ok ? 'Settings reset' : 'Could not save');
+      flashStatus(ok
+        ? label('statusReset', null, 'Settings reset')
+        : label('statusSaveFailed', null, 'Could not save'));
     });
   });
 

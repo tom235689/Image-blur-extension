@@ -3,6 +3,11 @@
   'use strict';
 
   var api = globalThis.ImageBlur;
+  var i18n = globalThis.ImageBlurI18n;
+
+  // Translates everything the markup declares; the strings this file swaps in
+  // afterwards go through label() below.
+  i18n.apply(document);
 
   var enabledInput = document.getElementById('enabled');
   var blurInput = document.getElementById('blur-amount');
@@ -25,13 +30,20 @@
   blurInput.min = String(api.BLUR_MIN);
   blurInput.max = String(api.BLUR_MAX);
 
+  /** A translated string, falling back to the English wording when it is missing. */
+  function label(key, fallback) {
+    return i18n.message(key) || fallback;
+  }
+
   function renderBlurValue(amount) {
-    blurValue.textContent = amount + ' px';
+    blurValue.textContent = i18n.pixels(amount);
   }
 
   function renderEnabled(enabled) {
     document.body.classList.toggle('is-off', !enabled);
-    stateLabel.textContent = enabled ? 'Blurring images on every site' : 'Blurring is turned off';
+    stateLabel.textContent = enabled
+      ? label('popupStateOn', 'Blurring images on every site')
+      : label('popupStateOff', 'Blurring is turned off');
   }
 
   function renderSettings(next) {
@@ -63,7 +75,9 @@
   }
 
   function renderPaused(paused) {
-    pauseButton.textContent = paused ? 'Resume on this tab' : 'Pause on this tab';
+    pauseButton.textContent = paused
+      ? label('popupResume', 'Resume on this tab')
+      : label('popupPause', 'Pause on this tab');
     pauseButton.classList.toggle('is-active', !!paused);
   }
 

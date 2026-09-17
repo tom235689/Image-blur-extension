@@ -2,51 +2,54 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Image Blur options</title>
+    <title data-i18n="optionsTitle">Image Blur options</title>
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
     <main class="page">
       <header>
-        <h1>Image Blur</h1>
-        <p class="muted">Images, CSS background images and videos are blurred on every site except the ones listed below.</p>
+        <h1 data-i18n="appName">Image Blur</h1>
+        <p class="muted" data-i18n="optionsIntro">Images, CSS background images and videos are blurred on every site except the ones listed below.</p>
       </header>
 
       <section class="card">
-        <h2>Blur strength</h2>
+        <h2 data-i18n="optionsBlurHeading">Blur strength</h2>
         <div class="label-line">
-          <label for="blur-amount">Radius applied to every blurred element</label>
+          <label for="blur-amount" data-i18n="optionsBlurLabel">Radius applied to every blurred element</label>
           <output id="blur-value" for="blur-amount">12 px</output>
         </div>
         <input type="range" id="blur-amount" min="2" max="60" step="1" value="12" />
       </section>
 
       <section class="card">
-        <h2>How images are hidden</h2>
+        <h2 data-i18n="optionsEffectHeading">How images are hidden</h2>
         <div class="field">
-          <label for="mode">Effect</label>
+          <label for="mode" data-i18n="optionsEffectLabel">Effect</label>
           <span class="field-input">
             <select id="mode">
-              <option value="blur">Blur</option>
-              <option value="blackout">Blackout</option>
+              <option value="blur" data-i18n="optionsEffectBlur">Blur</option>
+              <option value="blackout" data-i18n="optionsEffectBlackout">Blackout</option>
             </select>
           </span>
         </div>
-        <p class="muted">Blur softens the image and keeps its colours; blackout blurs it and then drops it to black, which leaves nothing to read at any strength.</p>
+        <p class="muted" data-i18n="optionsEffectNote">Blur softens the image and keeps its colours; blackout blurs it and then drops it to black, which leaves nothing to read at any strength.</p>
       </section>
 
       <section class="card">
-        <h2>Size limits</h2>
-        <p class="muted">Anything smaller than its limit in <em>both</em> directions is left sharp. Set a limit to 0 to blur every size.</p>
+        <h2 data-i18n="optionsSizeHeading">Size limits</h2>
+        <p class="muted" data-i18n="optionsSizeNote">Anything smaller than its limit in both directions is left sharp. Set a limit to 0 to blur every size.</p>
         <div class="field">
-          <label for="min-image-size">Images, videos, canvases and background images</label>
+          <label for="min-image-size" data-i18n="optionsMinImageLabel">Images, videos, canvases and background images</label>
           <span class="field-input">
             <input type="number" id="min-image-size" min="0" max="256" step="1" value="0" />
             <span class="unit">px</span>
           </span>
         </div>
         <div class="field">
-          <label for="min-vector-size">Inline SVG <span class="muted">- most sites draw their interface icons this way</span></label>
+          <label for="min-vector-size">
+            <span data-i18n="optionsMinVectorLabel">Inline SVG</span>
+            <span class="muted">- <span data-i18n="optionsMinVectorHint">most sites draw their interface icons this way</span></span>
+          </label>
           <span class="field-input">
             <input type="number" id="min-vector-size" min="0" max="256" step="1" value="48" />
             <span class="unit">px</span>
@@ -55,41 +58,42 @@
       </section>
 
       <section class="card">
-        <h2>Reveal on hover</h2>
+        <h2 data-i18n="optionsHoverHeading">Reveal on hover</h2>
         <label class="check">
           <input type="checkbox" id="reveal-on-hover" />
-          <span>Show an image sharply while the pointer is over it</span>
+          <span data-i18n="optionsHoverLabel">Show an image sharply while the pointer is over it</span>
         </label>
-        <p class="muted">When this is off, blurred media stays blurred no matter where the pointer goes.</p>
+        <p class="muted" data-i18n="optionsHoverNote">When this is off, blurred media stays blurred no matter where the pointer goes.</p>
         <div class="field">
-          <label for="hover-delay">Wait before revealing</label>
+          <label for="hover-delay" data-i18n="optionsHoverDelayLabel">Wait before revealing</label>
           <span class="field-input">
             <input type="number" id="hover-delay" min="0" max="2000" step="50" value="300" />
             <span class="unit">ms</span>
           </span>
         </div>
-        <p class="muted">Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.</p>
+        <p class="muted" data-i18n="optionsHoverDelayNote">Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.</p>
       </section>
 
       <section class="card">
-        <h2>Excluded sites</h2>
-        <p class="muted">Nothing is blurred on these hosts. A host also covers its sub domains, so <code>example.com</code> covers <code>images.example.com</code>.</p>
+        <h2 data-i18n="optionsSitesHeading">Excluded sites</h2>
+        <p class="muted" data-i18n="optionsSitesNote">Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.</p>
         <form id="add-form" class="add-row">
-          <input type="text" id="site-input" placeholder="example.com" spellcheck="false" autocomplete="off" />
-          <button type="submit">Add</button>
+          <input type="text" id="site-input" data-i18n-placeholder="optionsSitesPlaceholder" placeholder="example.com" spellcheck="false" autocomplete="off" />
+          <button type="submit" data-i18n="optionsSitesAdd">Add</button>
         </form>
-        <p id="add-error" class="error" hidden>Enter a host name such as example.com</p>
+        <p id="add-error" class="error" data-i18n="optionsSitesError" hidden>Enter a host name such as example.com</p>
         <ul id="site-list" class="sites"></ul>
-        <p id="empty-note" class="muted">No excluded sites yet.</p>
+        <p id="empty-note" class="muted" data-i18n="optionsSitesEmpty">No excluded sites yet.</p>
       </section>
 
       <footer>
-        <button type="button" id="reset" class="ghost">Reset all settings</button>
+        <button type="button" id="reset" class="ghost" data-i18n="optionsReset">Reset all settings</button>
         <span id="status" class="status" role="status"></span>
       </footer>
     </main>
 
     <script src="../common/defaults.js"></script>
+    <script src="../common/i18n.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

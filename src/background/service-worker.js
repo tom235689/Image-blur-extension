@@ -4,18 +4,30 @@
  * shortcuts, and hands the content script the stylesheet it adopts into shadow
  * roots.
  */
-importScripts('/src/common/defaults.js');
+importScripts('/src/common/defaults.js', '/src/common/i18n.js');
 
 var api = self.ImageBlur;
+var i18n = self.ImageBlurI18n;
 
 var PAUSED_TABS = 'pausedTabs';
 
+/** A translated string, falling back to the English wording when it is missing. */
+function label(key, fallback) {
+  return i18n.message(key) || fallback;
+}
+
+function badgeOff() {
+  return label('badgeOff', 'OFF');
+}
+
 function globalBadge(settings) {
   var off = !settings.enabled;
-  chrome.action.setBadgeText({ text: off ? 'OFF' : '' });
+  chrome.action.setBadgeText({ text: off ? badgeOff() : '' });
   chrome.action.setBadgeBackgroundColor({ color: '#6b7280' });
   chrome.action.setTitle({
-    title: off ? 'Image Blur - turned off' : 'Image Blur - blurring images'
+    title: off
+      ? label('tooltipTurnedOff', 'Image Blur - turned off')
+      : label('tooltipBlurring', 'Image Blur - blurring images')
   });
 }
 
@@ -24,12 +36,14 @@ function globalBadge(settings) {
  * global one. Tabs the content script cannot run in keep the global badge.
  */
 function tabBadge(tabId, state) {
-  chrome.action.setBadgeText({ tabId: tabId, text: state.active ? '' : 'OFF' });
+  chrome.action.setBadgeText({ tabId: tabId, text: state.active ? '' : badgeOff() });
   chrome.action.setTitle({
     tabId: tabId,
     title: state.active
-      ? 'Image Blur - blurring images'
-      : (state.paused ? 'Image Blur - paused on this tab' : 'Image Blur - not blurring this tab')
+      ? label('tooltipBlurring', 'Image Blur - blurring images')
+      : (state.paused
+        ? label('tooltipPausedTab', 'Image Blur - paused on this tab')
+        : label('tooltipTabOff', 'Image Blur - not blurring this tab'))
   });
 }
 

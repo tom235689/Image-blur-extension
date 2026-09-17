@@ -2,17 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Image Blur</title>
+    <title data-i18n="appName">Image Blur</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main class="panel">
       <section class="row row-header">
         <div class="titles">
-          <h1>Image Blur</h1>
-          <p id="state-label" class="muted">Blurring images on every site</p>
+          <h1 data-i18n="appName">Image Blur</h1>
+          <p id="state-label" class="muted" data-i18n="popupStateOn">Blurring images on every site</p>
         </div>
-        <label class="switch" title="Turn blurring on or off">
+        <label class="switch" data-i18n-title="popupToggleTitle" title="Turn blurring on or off">
           <input type="checkbox" id="enabled" />
           <span class="track"><span class="thumb"></span></span>
         </label>
@@ -20,7 +20,7 @@
 
       <section class="row">
         <div class="label-line">
-          <label for="blur-amount">Blur strength</label>
+          <label for="blur-amount" data-i18n="popupBlurStrength">Blur strength</label>
           <output id="blur-value" for="blur-amount">12 px</output>
         </div>
         <input type="range" id="blur-amount" min="2" max="60" step="1" value="12" />
@@ -28,26 +28,27 @@
 
       <section class="row row-site" id="site-row" hidden>
         <div class="site-line">
-          <span class="muted">This site</span>
+          <span class="muted" data-i18n="popupThisSite">This site</span>
           <span class="site-host" id="site-host"></span>
         </div>
-        <label class="switch" title="Blur images on this site">
+        <label class="switch" data-i18n-title="popupSiteToggleTitle" title="Blur images on this site">
           <input type="checkbox" id="site-enabled" />
           <span class="track"><span class="thumb"></span></span>
         </label>
       </section>
 
       <section class="row row-pause" id="pause-row" hidden>
-        <button type="button" id="pause-tab" class="wide">Pause on this tab</button>
-        <p class="muted" id="pause-note">Until the tab is reloaded. Shortcut: Alt+Shift+P</p>
+        <button type="button" id="pause-tab" class="wide" data-i18n="popupPause">Pause on this tab</button>
+        <p class="muted" id="pause-note" data-i18n="popupPauseNote">Until the tab is reloaded. Shortcut: Alt+Shift+P</p>
       </section>
 
-      <p class="muted" id="unavailable" hidden>Image Blur cannot run on this page.</p>
+      <p class="muted" id="unavailable" data-i18n="popupUnavailable" hidden>Image Blur cannot run on this page.</p>
 
-      <button type="button" id="open-options" class="link">Excluded sites and more settings</button>
+      <button type="button" id="open-options" class="link" data-i18n="popupOpenOptions">Excluded sites and more settings</button>
     </main>
 
     <script src="../common/defaults.js"></script>
+    <script src="../common/i18n.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

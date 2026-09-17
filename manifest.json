@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Image Blur",
+  "name": "__MSG_appName__",
   "version": "0.1.0",
-  "description": "Blurs images, CSS background images and videos on every page you visit.",
+  "description": "__MSG_appDescription__",
+  "default_locale": "en",
   "permissions": ["storage"],
   "icons": {
     "16": "icons/icon16.png",
@@ -11,7 +12,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Image Blur",
+    "default_title": "__MSG_actionTitle__",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -30,11 +31,11 @@
   "commands": {
     "toggle-blur": {
       "suggested_key": { "default": "Alt+Shift+B" },
-      "description": "Turn image blurring on or off"
+      "description": "__MSG_commandToggleBlur__"
     },
     "pause-tab": {
       "suggested_key": { "default": "Alt+Shift+P" },
-      "description": "Reveal images on this tab until it is reloaded"
+      "description": "__MSG_commandPauseTab__"
     }
   },
   "content_scripts": [
