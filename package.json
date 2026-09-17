@@ -1,0 +1,20 @@
+{
+  "name": "image-blur",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension that blurs images, CSS background images and videos while leaving text and layout sharp.",
+  "license": "MIT",
+  "homepage": "https://github.com/tom235689/Image-blur-extension",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tom235689/Image-blur-extension.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node tools/run-tests.js",
+    "check": "node tools/build.js --check",
+    "build": "node tools/build.js"
+  }
+}

@@ -22,13 +22,20 @@ profile, so stored settings never leak between runs.
 
 ```
 run-tests.js        launches everything, runs the checks, reports
+build.js            validates the package and writes the store zip
 lib/cdp.js          minimal DevTools protocol client
 lib/server.js       serves tools/pages, and generates the large DOM page
 lib/harness.js      finds Chrome, starts it, loads the extension
 lib/settings-module.js  runs src/common/defaults.js outside the browser
+lib/locales.js      reads the message catalogue and finds which keys are used
+lib/zip.js          dependency free archive writer, used by build.js
 checks/             one file per area, run in file name order
 pages/              fixtures
 ```
+
+`lib/locales.js` is shared on purpose: the build and the check that guards the
+message catalogue have to answer the same question the same way, or one of them
+lets through what the other rejects.
 
 ## Writing a check
 

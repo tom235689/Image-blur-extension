@@ -11,6 +11,10 @@ exception list are left untouched.
 2. Turn on **Developer mode**.
 3. Choose **Load unpacked** and select this folder.
 
+Chrome 102 or newer. The options page opens once on a fresh install, because
+blurring starts immediately and the exception list is worth knowing about before
+the first page loads.
+
 ## Using it
 
 - **Toolbar popup** - master on/off switch, blur strength, a switch for the site
@@ -35,7 +39,8 @@ exception list are left untouched.
   covers `images.example.com`.
 
 Settings live in `chrome.storage.sync`, so they follow the signed-in profile and
-apply to open tabs immediately.
+apply to open tabs immediately. Nothing else is stored and nothing is ever sent
+anywhere - see [PRIVACY.md](PRIVACY.md).
 
 ## How it works
 
@@ -99,8 +104,46 @@ the pointer is over it, and the app's host can go on the exception list.
 
 ## Tests
 
-`node tools/run-tests.js` drives a real Chrome with the extension loaded and
-checks what pages actually compute. See [tools/README.md](tools/README.md).
+`npm test` drives a real Chrome with the extension loaded and checks what pages
+actually compute. See [tools/README.md](tools/README.md).
+
+## Building a release
+
+```
+npm run check     validate the package without writing anything
+npm run build     write dist/image-blur-<version>.zip
+```
+
+The build refuses to package while the manifest version disagrees with
+`package.json`, the manifest points at a file that is not there, a page loads a
+script that is not there, or the code asks for a message the catalogue does not
+have - all of which the store finds only after an upload. Every entry is stored
+with the same fixed timestamp, so the same source always produces a byte for
+byte identical archive. Only `manifest.json`, `icons/`, `src/` and `_locales/`
+go in; the tests and the documentation stay out.
+
+There are no dependencies to install: the archive writer and the test harness
+are both part of the repository.
+
+## Translating
+
+Every user visible string lives in `_locales/en/messages.json`. Markup names a
+key with a `data-i18n` attribute and keeps the English as a fallback, so a
+missing translation degrades to English rather than to a blank label:
+
+```html
+<h2 data-i18n="optionsSizeHeading">Size limits</h2>
+```
+
+To add a language, copy `_locales/en/messages.json` to
+`_locales/<code>/messages.json` and translate the `message` field of each entry,
+leaving the keys and the `$PLACEHOLDER$` tokens alone. The `description` field
+is there to say what each string is for. Nothing else has to change - the
+interface picks up the browser's language, and its writing direction, on its
+own.
+
+`npm run check` fails if the code asks for a key the catalogue does not have,
+and the test suite additionally fails on a key nothing asks for.
 
 ## Known limits
 
@@ -132,12 +175,19 @@ checks what pages actually compute. See [tools/README.md](tools/README.md).
 
 ```
 manifest.json
+_locales/en/messages.json     every user visible string
 src/common/defaults.js        shared settings, validation and host matching
+src/common/i18n.js            fills data-i18n attributes, language and direction
 src/content/blur.css          injected at document_start
 src/content/content.js        activation and element tagging
 src/popup/                    toolbar popup
 src/options/                  options page
 src/background/               service worker (defaults, badges, pause, shortcuts, stylesheet)
+tools/build.js                validates the package and writes the store zip
 tools/                        browser driven test harness, see tools/README.md
 icons/
 ```
+
+## Licence
+
+MIT, see [LICENSE](LICENSE).

@@ -91,7 +91,13 @@ async function launch(options) {
   const loaded = await browser.send('Extensions.loadUnpacked', { path: EXTENSION_ROOT });
   const extensionId = loaded.id;
 
-  const pageInfo = await waitForTarget(port, (target) => target.type === 'page', 10000);
+  // Installing the extension opens its options page once, so the tab the checks
+  // drive has to be picked by more than "the first page target".
+  const pageInfo = await waitForTarget(
+    port,
+    (target) => target.type === 'page' && !target.url.startsWith('chrome-extension://'),
+    10000
+  );
   const page = await cdp.connect(pageInfo.webSocketDebuggerUrl);
   await page.send('Page.enable');
   await page.send('Runtime.enable');

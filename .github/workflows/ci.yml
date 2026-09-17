@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 or newer: the test harness talks to the DevTools protocol over
+      # the WebSocket built into the runtime rather than a dependency.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Report the browser under test
+        run: google-chrome --version
+
+      - name: Check the package
+        run: npm run check
+
+      # The checks drive a real headless Chrome with the extension loaded, so
+      # they need no display but they do need the browser the step above found.
+      - name: Run the checks
+        run: npm test
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+
+      - name: Build the store package
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          path: dist/*.zip
+          if-no-files-found: error

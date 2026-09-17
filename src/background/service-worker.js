@@ -108,7 +108,7 @@ function clearPause(tabId) {
   });
 }
 
-chrome.runtime.onInstalled.addListener(function () {
+chrome.runtime.onInstalled.addListener(function (details) {
   // readSettings fills in every missing key, so writing the result back turns
   // the defaults into real stored values on a fresh install.
   api.readSettings().then(function (settings) {
@@ -116,6 +116,17 @@ chrome.runtime.onInstalled.addListener(function () {
       globalBadge(settings);
     });
   });
+
+  // Blurring starts the moment this is installed, which is startling without a
+  // word of explanation, and the exception list and the shortcuts are not
+  // discoverable from the toolbar icon alone. Shown once, on a real install.
+  if (details && details.reason === 'install') {
+    try {
+      chrome.runtime.openOptionsPage();
+    } catch (error) {
+      /* Nothing worth failing an install over. */
+    }
+  }
 });
 
 chrome.runtime.onStartup.addListener(refreshGlobalBadge);
