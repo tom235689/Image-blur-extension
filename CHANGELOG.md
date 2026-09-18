@@ -4,7 +4,7 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-09-17
+## [1.0.0] - 2026-09-18
 
 First release intended for the Chrome Web Store.
 
@@ -20,9 +20,25 @@ First release intended for the Chrome Web Store.
   that does not exist.
 - Continuous integration runs the whole browser driven suite on every push.
 - A privacy policy and an MIT licence.
+- The suite now opens the popup and the options page themselves, which nothing
+  had ever loaded, and fails on a control with no accessible name or a message
+  key the catalogue never filled in.
 
 ### Fixed
 
+- Switching the extension off, excluding a host, pausing a tab or sparing an
+  image with a size limit all used to force `filter: none` on that image. The
+  rule needs `!important` to survive a site that marks its own image rules
+  important, so it also beat the filter the page itself had asked for: a site
+  that greyscales its own thumbnails had that greyscale stripped on exactly the
+  pages where this extension was supposed to be doing nothing. Every rule is now
+  written not to match instead of matching and undoing itself.
+- Turning the site switch back on for a sub domain did nothing at all when a
+  parent host was on the exception list, while the switch showed itself as on.
+  The covering entry is now removed with it.
+- The two switches in the popup had no accessible name, so a screen reader
+  announced each of them as an unlabelled checkbox, and the host box on the
+  options page had only a placeholder.
 - The raster size limit had no effect on `<input type="image">`,
   `<object type="image/*">` and `<embed type="image/*">`: their selectors
   outrank a single class, so the rule that takes the blur off small media lost

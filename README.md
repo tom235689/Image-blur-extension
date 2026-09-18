@@ -36,7 +36,14 @@ the first page loads.
   passing through uncovers nothing. The cover comes back the moment the pointer
   leaves. Turn it off and blurred media stays blurred.
 - **Excluded sites** - a host also covers its sub domains, so `example.com`
-  covers `images.example.com`.
+  covers `images.example.com`. Because of that, turning the site switch back on
+  for `images.example.com` removes the `example.com` entry that was covering
+  it: a list of hosts to skip cannot say "this host, but not that sub domain".
+- **Left alone means left alone** - wherever nothing is blurred, whether the
+  host is excluded, the extension is switched off, the tab is paused or the
+  image is below the size limit, the page keeps whatever filter it applied to
+  its own images. This extension never sets `filter: none` to stop blurring;
+  its rules simply stop matching.
 
 Settings live in `chrome.storage.sync`, so they follow the signed-in profile and
 apply to open tabs immediately. Nothing else is stored and nothing is ever sent
@@ -66,13 +73,21 @@ style and tags what it finds:
 | `ibx-bg-anchor` | overlay host that needed `position: relative` |
 | `ibx-bg-canvas` | `<html>` or `<body>`, whose background is painted across the whole viewport |
 | `ibx-vector` | inline `<svg>` at or above the vector size limit |
-| `ibx-small` | media below the raster size limit, whose blur is taken off again |
+| `ibx-small` | media below the raster size limit, excluded from the blur rule |
+
+Every rule is written so that it does not match when there is nothing to blur,
+rather than matching and switching the blur off again. A rule that said
+`filter: none` would have to carry `!important` to survive a site that marks
+its own image rules important, and it would then beat that site's own filter as
+well - so an excluded host would have its images stripped of the styling the
+page gave them. Hence `html:not(.ibx-off) img:not(.ibx-small)` rather than a
+counter-rule.
 
 A document stylesheet does not reach inside a shadow tree, so every open shadow
 root that turns up gets the same sheet adopted into it (the service worker hands
 over the text) and is observed and scanned like the main document. Shadow tree
-copies of the rules use `:host-context(html.ibx-off)` where the document uses
-`html.ibx-off`, because a shadow tree cannot see `<html>`.
+copies of the rules use `:host-context(html:not(.ibx-off))` where the document
+uses `html:not(.ibx-off)`, because a shadow tree cannot see `<html>`.
 
 A `MutationObserver` keeps up with dynamically added content, the page is swept
 again on `DOMContentLoaded` and shortly after `load` to catch late stylesheets
