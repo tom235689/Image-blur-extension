@@ -20,6 +20,14 @@ const END_OF_CENTRAL = 0x06054b50;
 const METHOD_DEFLATE = 8;
 const VERSION_NEEDED = 20;
 
+/**
+ * General purpose bit 11: the entry name is UTF-8 rather than the code page the
+ * reader happens to guess. Names are written with Buffer.from(name, "utf8"), so
+ * saying so is simply the truth, and it is what keeps a non ASCII file name
+ * from arriving mangled.
+ */
+const FLAG_UTF8_NAMES = 0x0800;
+
 const CRC_TABLE = (() => {
   const table = new Int32Array(256);
   for (let i = 0; i < 256; i += 1) {
@@ -72,7 +80,7 @@ function create(entries) {
     const local = Buffer.alloc(30 + name.length);
     local.writeUInt32LE(LOCAL_HEADER, 0);
     local.writeUInt16LE(VERSION_NEEDED, 4);
-    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(FLAG_UTF8_NAMES, 6);
     local.writeUInt16LE(METHOD_DEFLATE, 8);
     local.writeUInt16LE(time, 10);
     local.writeUInt16LE(day, 12);
@@ -87,7 +95,7 @@ function create(entries) {
     central.writeUInt32LE(CENTRAL_HEADER, 0);
     central.writeUInt16LE(VERSION_NEEDED, 4);
     central.writeUInt16LE(VERSION_NEEDED, 6);
-    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(FLAG_UTF8_NAMES, 8);
     central.writeUInt16LE(METHOD_DEFLATE, 10);
     central.writeUInt16LE(time, 12);
     central.writeUInt16LE(day, 14);

@@ -32,19 +32,30 @@ function globalBadge(settings) {
 }
 
 /**
+ * Naming a tab that has gone makes chrome.action reject rather than throw, and
+ * a tab can be closed between reporting its state and this running. A badge
+ * for a tab nobody can see is not worth an unhandled rejection in the log.
+ */
+function ignoreClosedTab(result) {
+  if (result && typeof result.catch === 'function') {
+    result.catch(function () {});
+  }
+}
+
+/**
  * A tab that reports its own state gets its own badge, which wins over the
  * global one. Tabs the content script cannot run in keep the global badge.
  */
 function tabBadge(tabId, state) {
-  chrome.action.setBadgeText({ tabId: tabId, text: state.active ? '' : badgeOff() });
-  chrome.action.setTitle({
+  ignoreClosedTab(chrome.action.setBadgeText({ tabId: tabId, text: state.active ? '' : badgeOff() }));
+  ignoreClosedTab(chrome.action.setTitle({
     tabId: tabId,
     title: state.active
       ? label('tooltipBlurring', 'Image Blur - blurring images')
       : (state.paused
         ? label('tooltipPausedTab', 'Image Blur - paused on this tab')
         : label('tooltipTabOff', 'Image Blur - not blurring this tab'))
-  });
+  }));
 }
 
 function refreshGlobalBadge() {
