@@ -179,6 +179,10 @@
     "message": "Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.",
     "description": "Explains that the exception list matches sub domains too."
   },
+  "optionsSitesInputLabel": {
+    "message": "Host to leave unblurred",
+    "description": "Accessible name of the box where a host is typed; a placeholder alone does not name a field."
+  },
   "optionsSitesPlaceholder": {
     "message": "example.com",
     "description": "Placeholder in the box where a host is typed."
