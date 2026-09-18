@@ -102,6 +102,11 @@
     };
   }
 
+  /** Whether one stored entry covers a host: the host itself, or a parent of it. */
+  function covers(entry, host) {
+    return !!entry && (host === entry || host.slice(-(entry.length + 1)) === '.' + entry);
+  }
+
   /**
    * A stored host also covers its sub domains, so "example.com" excludes
    * "images.example.com" as well.
@@ -112,12 +117,34 @@
       return false;
     }
     for (var i = 0; i < excludedSites.length; i += 1) {
-      var entry = normalizeHost(excludedSites[i]);
-      if (entry && (host === entry || host.slice(-(entry.length + 1)) === '.' + entry)) {
+      if (covers(normalizeHost(excludedSites[i]), host)) {
         return true;
       }
     }
     return false;
+  }
+
+  /**
+   * The exception list after turning blurring on or off for one host.
+   *
+   * Turning it on has to drop every entry that covers the host, not only an
+   * entry equal to it. A stored "example.com" excludes "images.example.com"
+   * too, so removing nothing would leave the switch saying one thing and the
+   * page doing another. The parent goes with it, because a list of hosts to
+   * skip cannot say "this host, but not that sub domain of it".
+   */
+  function setSiteBlurred(excludedSites, hostname, blurred) {
+    var host = normalizeHost(hostname);
+    var list = normalizeSiteList(excludedSites);
+    if (!host) {
+      return list;
+    }
+    if (blurred) {
+      return list.filter(function (entry) {
+        return !covers(entry, host);
+      });
+    }
+    return isExcluded(host, list) ? list : normalizeSiteList(list.concat(host));
   }
 
   function storage() {
@@ -177,6 +204,7 @@
     normalizeSiteList: normalizeSiteList,
     normalizeSettings: normalizeSettings,
     isExcluded: isExcluded,
+    setSiteBlurred: setSiteBlurred,
     readSettings: readSettings,
     writeSettings: writeSettings
   };

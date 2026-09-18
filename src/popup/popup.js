@@ -108,12 +108,7 @@
   });
 
   siteInput.addEventListener('change', function () {
-    var list = settings.excludedSites.filter(function (entry) {
-      return entry !== host;
-    });
-    if (!siteInput.checked) {
-      list = api.normalizeSiteList(list.concat(host));
-    }
+    var list = api.setSiteBlurred(settings.excludedSites, host, siteInput.checked);
     settings.excludedSites = list;
     save({ excludedSites: list });
   });

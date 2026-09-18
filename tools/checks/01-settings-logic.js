@@ -19,6 +19,24 @@ module.exports = {
     t.expect('suffix is not a match', api.isExcluded('notexample.com', ['example.com']), false);
     t.expect('prefix is not a match', api.isExcluded('example.com.evil.com', ['example.com']), false);
 
+    // Turning a site back on has to beat every entry that covers it, or the
+    // switch in the popup reports a change it did not make.
+    t.expect('excluding a site adds it', api.setSiteBlurred([], 'example.com', false), ['example.com']);
+    t.expect('excluding it twice changes nothing',
+      api.setSiteBlurred(['example.com'], 'example.com', false), ['example.com']);
+    t.expect('a sub domain already covered is not added again',
+      api.setSiteBlurred(['example.com'], 'images.example.com', false), ['example.com']);
+    t.expect('blurring a site removes its own entry',
+      api.setSiteBlurred(['a.com', 'example.com'], 'example.com', true), ['a.com']);
+    t.expect('blurring a sub domain removes the parent that covered it',
+      api.setSiteBlurred(['a.com', 'example.com'], 'images.example.com', true), ['a.com']);
+    t.expect('a host that only looks like a parent is left alone',
+      api.setSiteBlurred(['notexample.com'], 'example.com', true), ['notexample.com']);
+    t.expect('blurring a site that was never excluded changes nothing',
+      api.setSiteBlurred(['a.com'], 'b.com', true), ['a.com']);
+    t.expect('an unusable host leaves the list as it was',
+      api.setSiteBlurred(['a.com'], 'not a host', false), ['a.com']);
+
     t.expect('blur clamped high', api.clampBlur(1000), api.BLUR_MAX);
     t.expect('blur clamped low', api.clampBlur(0), api.BLUR_MIN);
     t.expect('blur falls back on text', api.clampBlur('abc'), api.DEFAULT_SETTINGS.blurAmount);
