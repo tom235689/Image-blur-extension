@@ -20,7 +20,8 @@ const HTML_STATE = `(() => {
     cls: (document.documentElement.getAttribute('class') || '').split(' ').sort().join(' '),
     overlay: before.filter,
     position: before.position,
-    display: before.display
+    display: before.display,
+    content: before.content
   };
 })()`;
 
@@ -54,6 +55,9 @@ module.exports = {
 
     await t.setSettings({ enabled: false });
     state = await t.evaluate(HTML_STATE);
-    t.expect('switching off removes the overlay on html itself', state.display, 'none');
+    // Not merely hidden: with the rule gated on html:not(.ibx-off) the pseudo
+    // element is never generated, so nothing of it is left on the page.
+    t.expect('switching off leaves no overlay on html at all',
+      [state.content, state.overlay], ['none', 'none']);
   }
 };

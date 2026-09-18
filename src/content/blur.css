@@ -6,11 +6,25 @@
  * have been read, which means a slow storage read can never flash an unblurred
  * image.
  *
- * Selectors come in two flavours because a shadow tree cannot see <html>:
- * "html.ibx-off img" for the document, ":host-context(html.ibx-off) img" for
- * the same rule inside a shadow root.
+ * Nothing here ever sets "filter: none" to stop blurring. Not blurring has to
+ * mean leaving the element exactly as the page styled it, and a site is
+ * entitled to put its own filter on its own images; a rule that switched the
+ * blur off would win over that filter too, because it has to carry !important
+ * to survive a site that marks its own image rules important. So every rule is
+ * instead written not to match in the first place: gated on
+ * html:not(.ibx-off), and excluding the elements the size limit spared.
  *
- * ibx-off   - extension disabled, or the current host is on the exception list
+ * The exception is the hover reveal near the bottom, which does set
+ * filter: none. That is not a way of switching anything off: it is the pointer
+ * asking to see one image as it is, and only for as long as it rests there.
+ *
+ * Selectors come in two flavours because a shadow tree cannot see <html>:
+ * "html:not(.ibx-off) img" for the document, and
+ * ":host-context(html:not(.ibx-off)) img" for the same rule inside a shadow
+ * root. Their specificities are equal, so within each flavour the later rule
+ * wins and the order below is load bearing: blur, then hover reveal.
+ *
+ * ibx-off   - extension disabled, this host is excluded, or this tab is paused
  * ibx-hover - reveal the element the pointer is over
  *
  * Elements carrying a CSS background image are tagged by the content script:
@@ -19,6 +33,7 @@
  * ibx-bg-anchor  - statically positioned overlay host that needs a containing block
  * ibx-bg-canvas  - <html> or <body>, whose background is painted over the whole viewport
  * ibx-vector     - inline <svg> large enough to be artwork rather than an icon
+ * ibx-small      - replaced media the size limit spared, excluded from every rule
  */
 
 :root {
@@ -32,36 +47,35 @@ html.ibx-blackout {
   --ibx-effect: blur(var(--ibx-blur-radius)) brightness(0);
 }
 
-img,
-video,
-canvas,
-object[type^="image/"],
-embed[type^="image/"],
-input[type="image"],
-.ibx-vector,
-.ibx-bg-direct {
+/* Blur - document tree. */
+html:not(.ibx-off) img:not(.ibx-small),
+html:not(.ibx-off) video:not(.ibx-small),
+html:not(.ibx-off) canvas:not(.ibx-small),
+html:not(.ibx-off) object[type^="image/"]:not(.ibx-small),
+html:not(.ibx-off) embed[type^="image/"]:not(.ibx-small),
+html:not(.ibx-off) input[type="image"]:not(.ibx-small),
+html:not(.ibx-off) .ibx-vector,
+html:not(.ibx-off) .ibx-bg-direct,
+/* Blur - shadow trees. */
+:host-context(html:not(.ibx-off)) img:not(.ibx-small),
+:host-context(html:not(.ibx-off)) video:not(.ibx-small),
+:host-context(html:not(.ibx-off)) canvas:not(.ibx-small),
+:host-context(html:not(.ibx-off)) object[type^="image/"]:not(.ibx-small),
+:host-context(html:not(.ibx-off)) embed[type^="image/"]:not(.ibx-small),
+:host-context(html:not(.ibx-off)) input[type="image"]:not(.ibx-small),
+:host-context(html:not(.ibx-off)) .ibx-vector,
+:host-context(html:not(.ibx-off)) .ibx-bg-direct {
   filter: var(--ibx-effect) !important;
 }
 
 /*
- * Media the content script measured as smaller than the configured minimum in
- * both directions: an interface icon rather than content. Tagging works this
- * way round because the rule above blurs replaced media on sight, before
- * anything has been measured.
- *
- * The class is repeated on purpose. Most of the rule above is a bare tag, which
- * one class outranks, but input[type="image"], object[type^="image/"] and
- * embed[type^="image/"] are a tag plus an attribute, which outranks one class
- * in turn - !important does not break that tie, it only decides which cascade
- * layer wins. A single .ibx-small would therefore lose to exactly those three,
- * and the size limit would quietly do nothing for image buttons and image
- * objects. Two classes outrank all of them.
+ * The overlay below is painted inside its host, so a statically positioned host
+ * needs a containing block first. This changes the page's own layout, which is
+ * exactly why it is gated too: switched off, the element goes back to whatever
+ * position the page gave it, with nothing left behind.
  */
-.ibx-small.ibx-small {
-  filter: none !important;
-}
-
-.ibx-bg-anchor {
+html:not(.ibx-off) .ibx-bg-anchor,
+:host-context(html:not(.ibx-off)) .ibx-bg-anchor {
   position: relative !important;
 }
 
@@ -74,8 +88,13 @@ input[type="image"],
  * sharp original show through around the border. The overlay is therefore
  * grown past the box so the fade happens outside it, then clipped back to the
  * box - clipping runs after filtering, so nothing bleeds over the neighbours.
+ *
+ * <html> needs its own selector in each flavour, since it is never a descendant
+ * of itself.
  */
-.ibx-bg-overlay::before {
+html:not(.ibx-off) .ibx-bg-overlay::before,
+html:not(.ibx-off).ibx-bg-overlay::before,
+:host-context(html:not(.ibx-off)) .ibx-bg-overlay::before {
   content: "" !important;
   position: absolute !important;
   inset: calc(var(--ibx-blur-radius) * -2) !important;
@@ -93,7 +112,9 @@ input[type="image"],
  * that hides it has to cover the viewport too. Must stay after the rule above:
  * both have the same specificity.
  */
-.ibx-bg-canvas::before {
+html:not(.ibx-off) .ibx-bg-canvas::before,
+html:not(.ibx-off).ibx-bg-canvas::before,
+:host-context(html:not(.ibx-off)) .ibx-bg-canvas::before {
   position: fixed !important;
   inset: calc(var(--ibx-blur-radius) * -2) !important;
   clip-path: inset(calc(var(--ibx-blur-radius) * 2)) !important;
@@ -124,7 +145,11 @@ html.ibx-hover .ibx-bg-direct,
   transition: filter 0s 0s !important;
 }
 
-/* Reveal on hover - document tree. */
+/*
+ * Reveal on hover - document tree. Revealing does set filter: none, and here
+ * that is the whole point: the pointer is asking to see the image as it is,
+ * for as long as it rests there.
+ */
 html.ibx-hover img:hover,
 html.ibx-hover video:hover,
 html.ibx-hover canvas:hover,
@@ -166,49 +191,4 @@ html.ibx-hover .ibx-bg-canvas:hover::before {
 :host-context(html.ibx-hover) .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
   transition-delay: var(--ibx-hover-delay) !important;
-}
-
-/* Disabled or excluded - document tree. */
-html.ibx-off img,
-html.ibx-off video,
-html.ibx-off canvas,
-html.ibx-off object[type^="image/"],
-html.ibx-off embed[type^="image/"],
-html.ibx-off input[type="image"],
-html.ibx-off .ibx-vector,
-html.ibx-off .ibx-bg-direct {
-  filter: none !important;
-}
-
-html.ibx-off .ibx-bg-anchor {
-  position: static !important;
-}
-
-html.ibx-off .ibx-bg-overlay::before {
-  display: none !important;
-}
-
-/* <html> is never a descendant of itself, so it needs its own rule. */
-html.ibx-off.ibx-bg-overlay::before {
-  display: none !important;
-}
-
-/* Disabled or excluded - shadow trees. */
-:host-context(html.ibx-off) img,
-:host-context(html.ibx-off) video,
-:host-context(html.ibx-off) canvas,
-:host-context(html.ibx-off) object[type^="image/"],
-:host-context(html.ibx-off) embed[type^="image/"],
-:host-context(html.ibx-off) input[type="image"],
-:host-context(html.ibx-off) .ibx-vector,
-:host-context(html.ibx-off) .ibx-bg-direct {
-  filter: none !important;
-}
-
-:host-context(html.ibx-off) .ibx-bg-anchor {
-  position: static !important;
-}
-
-:host-context(html.ibx-off) .ibx-bg-overlay::before {
-  display: none !important;
 }
