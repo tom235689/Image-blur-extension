@@ -73,6 +73,7 @@ style and tags what it finds:
 | `ibx-bg-anchor` | overlay host that needed `position: relative` |
 | `ibx-bg-canvas` | `<html>` or `<body>`, whose background is painted across the whole viewport |
 | `ibx-vector` | inline `<svg>` at or above the vector size limit |
+| `ibx-media` | a picture no selector can reach: an untyped `<object>` or `<embed>`, a `content: url()`, a border drawn from an image |
 | `ibx-small` | media below the raster size limit, excluded from the blur rule |
 
 Every rule is written so that it does not match when there is nothing to blur,
@@ -80,14 +81,19 @@ rather than matching and switching the blur off again. A rule that said
 `filter: none` would have to carry `!important` to survive a site that marks
 its own image rules important, and it would then beat that site's own filter as
 well - so an excluded host would have its images stripped of the styling the
-page gave them. Hence `html:not(.ibx-off) img:not(.ibx-small)` rather than a
+page gave them. Hence `:root:not(.ibx-off) img:not(.ibx-small)` rather than a
 counter-rule.
+
+The gate is `:root` rather than `html` because a picture opened on its own is
+still a document: navigating straight to an `.svg` file gives one whose root
+element is `<svg>`, and the image to hide is that root element rather than
+anything inside it.
 
 A document stylesheet does not reach inside a shadow tree, so every open shadow
 root that turns up gets the same sheet adopted into it (the service worker hands
 over the text) and is observed and scanned like the main document. Shadow tree
 copies of the rules use `:host-context(html:not(.ibx-off))` where the document
-uses `html:not(.ibx-off)`, because a shadow tree cannot see `<html>`.
+uses `:root:not(.ibx-off)`, because a shadow tree cannot see the root element.
 
 A `MutationObserver` keeps up with dynamically added content, the page is swept
 again on `DOMContentLoaded` and shortly after `load` to catch late stylesheets
@@ -166,9 +172,22 @@ and the test suite additionally fails on a key nothing asks for.
   laid out at zero size counts as too big rather than too small and stays
   blurred. Media is measured again when its resource loads, when the window is
   resized and when the pointer enters it.
-- Background images declared on `::before` / `::after` cannot be detected, and an
-  element that already uses `::before` has that pseudo element replaced by the
-  blurred overlay.
+- Background images declared on `::before` / `::after` cannot be detected.
+  Finding them would mean asking for the pseudo element style of every element
+  on the page, roughly tripling the cost of a scan, and this extension builds
+  its own overlay out of `::before`, so the two would collide on exactly the
+  elements that need it. An element that already uses `::before` has that
+  pseudo element replaced by the blurred overlay.
+- An `<object>` or `<embed>` that names no `type` is recognised by the file
+  extension at the end of its source URL, because the alternative - reading
+  `contentDocument` - is `null` for a cross origin page just as it is for an
+  image, and would eventually blur a document and the text in it. One whose URL
+  ends in no extension is therefore missed.
+- A `list-style-image` marker is drawn at font size and cannot be filtered on
+  its own: `::marker` takes no filter, and blurring the list item would blur its
+  text. A `mask-image` is not covered either, and does not need to be: a mask is
+  used for its alpha channel, so what reaches the screen is the colour
+  underneath in the shape of the image, not the image.
 - Closed shadow roots (`attachShadow({ mode: 'closed' })`) are invisible to
   extensions, so media inside them stays sharp. Open roots attached long after
   their host was scanned are picked up by sweeps at 1, 3, 8 and 20 seconds after
@@ -182,6 +201,11 @@ and the test suite additionally fails on a key nothing asks for.
   `<body>` nearly all of the time.
 - Media inside a cross origin frame is handled by that frame's own copy of the
   content script; frames the browser does not let extensions touch stay sharp.
+- A picture that only the content script can find - an untyped `<object>` or
+  `<embed>`, a `content: url()`, a border drawn from an image - is sharp until
+  the scan reaches it, because there is no selector for the stylesheet to blur
+  it with beforehand. Everything a selector can reach is blurred before the
+  first paint instead.
 - On an excluded site images may be blurred for a few milliseconds until the
   stored settings arrive. That direction is deliberate: erring towards blurred is
   safer than flashing an image that should have been hidden.

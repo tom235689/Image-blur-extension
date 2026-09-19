@@ -4,7 +4,7 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-09-18
+## [1.0.0] - 2026-09-19
 
 First release intended for the Chrome Web Store.
 
@@ -23,9 +23,30 @@ First release intended for the Chrome Web Store.
 - The suite now opens the popup and the options page themselves, which nothing
   had ever loaded, and fails on a control with no accessible name or a message
   key the catalogue never filled in.
+- A check that walks every construct able to put a picture on a screen, and
+  pins the three that are deliberately not covered alongside the ones that are,
+  so a gap stays a decision on the record rather than a surprise.
+- store/listing.md holds the single purpose statement, the permission
+  justifications and the privacy certifications the store refuses a review
+  without, next to the code they describe.
 
 ### Fixed
 
+- Three ways of putting a picture on a screen were not covered at all, so the
+  image simply showed: an `<object>` or `<embed>` that names no `type`, and any
+  element the `content` property replaces with a `url()`. A border drawn from a
+  picture was uncovered too. All four are now found while the page is scanned.
+- The stylesheet that reaches inside shadow roots was asked for exactly once per
+  page, and the request can fail - the service worker may still be starting up.
+  One failure was permanent for the life of that page, and a shadow tree without
+  the sheet is a shadow tree whose images are never blurred, which on a site
+  built from web components means most of them. It is retried now, on a widening
+  interval, and the roots waiting for it are no longer kept in a list that only
+  grew.
+- A picture opened as its own document stopped being blurred: navigating
+  straight to an `.svg` file gives a document whose root element is `<svg>`, and
+  the rules had been anchored to `html` and to descendants of the root, so the
+  one case where the image fills the whole window matched nothing.
 - Switching the extension off, excluding a host, pausing a tab or sparing an
   image with a size limit all used to force `filter: none` on that image. The
   rule needs `!important` to survive a site that marks its own image rules
@@ -50,6 +71,10 @@ First release intended for the Chrome Web Store.
 
 ### Changed
 
+- A class change is now queued only when it is a change. Every element used to
+  be offered half a dozen classes it did not have, which on a large page is tens
+  of thousands of queued operations per pass whose whole effect is to decide to
+  do nothing.
 - `minimum_chrome_version` is declared as 102, the first version with
   `chrome.storage.session`, so the extension cannot install where it would
   silently lose per tab pauses.
