@@ -26,6 +26,7 @@
   var CLASS_BG_CANVAS = 'ibx-bg-canvas';
   var CLASS_VECTOR = 'ibx-vector';
   var CLASS_SMALL = 'ibx-small';
+  var CLASS_MEDIA = 'ibx-media';
 
   /** How long one scanning chunk may block the main thread. */
   var FRAME_BUDGET_MS = 8;
@@ -34,6 +35,9 @@
   var MEDIA_TAGS = { IMG: 1, VIDEO: 1, CANVAS: 1, OBJECT: 1, EMBED: 1, INPUT: 1 };
 
   var BACKGROUND_IMAGE_PATTERN = /url\(|image-set\(/i;
+
+  /** Image file extensions as they appear at the end of a URL path. */
+  var IMAGE_URL_PATTERN = /\.(?:apng|avif|bmp|gif|ico|jfif|jpe?g|png|svg|tiff?|webp)(?:[?#]|$)/i;
 
   var OBSERVE_OPTIONS = {
     subtree: true,
@@ -59,10 +63,20 @@
   var scheduled = false;
   var resizeTimer = 0;
 
+  /**
+   * How long to wait before each attempt at fetching the stylesheet text. The
+   * service worker may still be starting up when the first shadow root turns
+   * up, and a shadow tree without the sheet is a shadow tree whose images are
+   * never blurred, so one refusal must not be the end of it.
+   */
+  var SHEET_RETRY_DELAYS = [0, 400, 1500, 5000, 15000];
+
   var shadowSheet = null;
-  var shadowSheetRequested = false;
+  var sheetAttempt = 0;
+  var sheetInFlight = false;
   var knownShadowRoots = new WeakSet();
-  var rootsAwaitingSheet = [];
+  /** Roots to style as soon as the sheet arrives; a Set, so a root queues once. */
+  var rootsAwaitingSheet = new Set();
 
   function root() {
     return document.documentElement;
@@ -126,38 +140,66 @@
    * read its own resources unless they are web accessible, and exposing them
    * to every page just to style shadow trees is not worth it.
    */
+  /** Whether it is still worth holding on to a root, or asking again. */
+  function sheetStillComing() {
+    return sheetInFlight || sheetAttempt < SHEET_RETRY_DELAYS.length;
+  }
+
+  /** Stops trying, and lets go of the roots that were waiting on the answer. */
+  function giveUpOnSheet() {
+    sheetInFlight = false;
+    sheetAttempt = SHEET_RETRY_DELAYS.length;
+    rootsAwaitingSheet.clear();
+  }
+
   function requestShadowSheet() {
-    if (shadowSheetRequested) {
+    if (shadowSheet || sheetInFlight || sheetAttempt >= SHEET_RETRY_DELAYS.length) {
       return;
     }
-    shadowSheetRequested = true;
+    sheetInFlight = true;
+    var delay = SHEET_RETRY_DELAYS[sheetAttempt];
+    sheetAttempt += 1;
+    setTimeout(sendSheetRequest, delay);
+  }
 
+  function sendSheetRequest() {
     try {
       chrome.runtime.sendMessage({ type: 'ibx-blur-css' }, function (response) {
+        sheetInFlight = false;
+
         if (chrome.runtime.lastError || !response || !response.css) {
+          // The worker was asleep, or busy starting; ask again shortly.
+          requestShadowSheet();
           return;
         }
+
+        var sheet;
         try {
-          shadowSheet = new CSSStyleSheet();
-          shadowSheet.replaceSync(response.css);
+          sheet = new CSSStyleSheet();
+          sheet.replaceSync(response.css);
         } catch (error) {
-          shadowSheet = null;
+          // Constructable stylesheets are unavailable here, which asking again
+          // cannot change.
+          giveUpOnSheet();
           return;
         }
+        shadowSheet = sheet;
+
         var waiting = rootsAwaitingSheet;
-        rootsAwaitingSheet = [];
-        for (var i = 0; i < waiting.length; i += 1) {
-          adoptShadowSheet(waiting[i]);
-        }
+        rootsAwaitingSheet = new Set();
+        waiting.forEach(adoptShadowSheet);
       });
     } catch (error) {
-      /* The extension was reloaded; shadow trees stay unstyled in this frame. */
+      /* The extension was reloaded; this frame cannot reach it any more. */
+      giveUpOnSheet();
     }
   }
 
   function adoptShadowSheet(shadowRoot) {
     if (!shadowSheet) {
-      rootsAwaitingSheet.push(shadowRoot);
+      if (sheetStillComing()) {
+        rootsAwaitingSheet.add(shadowRoot);
+      }
       return;
     }
     try {
@@ -265,6 +307,56 @@
     queueClass(ops, element, CLASS_SMALL, exempt);
   }
 
+  /**
+   * An <object> or <embed> with no type attribute still shows an image when its
+   * source points at one, and blur.css has nothing to match it with:
+   * object[type^="image/"] needs the attribute the author left out.
+   *
+   * The source URL is the only clue that can be trusted here. contentDocument
+   * is null for an image, but it is equally null for a cross origin page, so
+   * reading it would eventually blur a document and the text inside it. An
+   * extension at the end of the path is narrow enough never to do that.
+   */
+  function holdsUntypedImage(element, upper) {
+    if (upper !== 'OBJECT' && upper !== 'EMBED') {
+      return false;
+    }
+    if (element.getAttribute('type')) {
+      return false;
+    }
+    var source = element.getAttribute(upper === 'OBJECT' ? 'data' : 'src');
+    return !!source && IMAGE_URL_PATTERN.test(source);
+  }
+
+  /** A border-image drawn from a picture rather than from a gradient. */
+  function hasBorderImage(style) {
+    var source = style.borderImageSource;
+    return !!source && source !== 'none' && BACKGROUND_IMAGE_PATTERN.test(source);
+  }
+
+  /**
+   * Images that no CSS selector can reach: an untyped <object> or <embed>, any
+   * element the content property replaces with a url(), and a border drawn from
+   * a picture.
+   *
+   * Replaced media is blurred on sight and untagged once measured; these are
+   * the other way round, because until this runs there is nothing to select.
+   * That means the size limit is applied here rather than by taking a blur off
+   * again, and it means such an image is sharp for the length of one scan.
+   *
+   * A border-image only counts when the element holds no text, because the only
+   * way to hide it is to blur the element itself, and the overlay used for a
+   * background cannot stand in: it copies the background, which a border image
+   * is not part of.
+   */
+  function markUnselectableMedia(element, upper, style, ops) {
+    var found = holdsUntypedImage(element, upper)
+      || (!!style.content && style.content.indexOf('url(') === 0)
+      || (hasBorderImage(style) && !hasText(element));
+    var blur = found && !isHidden(style) && !isBelowSize(element, settings.minImageSize);
+    queueClass(ops, element, CLASS_MEDIA, blur);
+  }
+
   function markBackground(element, upper, style, ops) {
     var image = style.backgroundImage;
     var hasImage = !!image && image !== 'none' && BACKGROUND_IMAGE_PATTERN.test(image);
@@ -348,6 +440,7 @@
     } else if (MEDIA_TAGS[upper] === 1) {
       markSmallMedia(element, upper, style, ops);
     }
+    markUnselectableMedia(element, upper, style, ops);
     markBackground(element, upper, style, ops);
   }
 

@@ -12,14 +12,14 @@
  * blur off would win over that filter too, because it has to carry !important
  * to survive a site that marks its own image rules important. So every rule is
  * instead written not to match in the first place: gated on
- * html:not(.ibx-off), and excluding the elements the size limit spared.
+ * :root:not(.ibx-off), and excluding the elements the size limit spared.
  *
  * The exception is the hover reveal near the bottom, which does set
  * filter: none. That is not a way of switching anything off: it is the pointer
  * asking to see one image as it is, and only for as long as it rests there.
  *
  * Selectors come in two flavours because a shadow tree cannot see <html>:
- * "html:not(.ibx-off) img" for the document, and
+ * ":root:not(.ibx-off) img" for the document, and
  * ":host-context(html:not(.ibx-off)) img" for the same rule inside a shadow
  * root. Their specificities are equal, so within each flavour the later rule
  * wins and the order below is load bearing: blur, then hover reveal.
@@ -34,6 +34,7 @@
  * ibx-bg-canvas  - <html> or <body>, whose background is painted over the whole viewport
  * ibx-vector     - inline <svg> large enough to be artwork rather than an icon
  * ibx-small      - replaced media the size limit spared, excluded from every rule
+ * ibx-media      - an image no selector here can reach, found by the script
  */
 
 :root {
@@ -43,19 +44,30 @@
   --ibx-effect: blur(var(--ibx-blur-radius));
 }
 
-html.ibx-blackout {
+:root.ibx-blackout {
   --ibx-effect: blur(var(--ibx-blur-radius)) brightness(0);
 }
 
 /* Blur - document tree. */
-html:not(.ibx-off) img:not(.ibx-small),
-html:not(.ibx-off) video:not(.ibx-small),
-html:not(.ibx-off) canvas:not(.ibx-small),
-html:not(.ibx-off) object[type^="image/"]:not(.ibx-small),
-html:not(.ibx-off) embed[type^="image/"]:not(.ibx-small),
-html:not(.ibx-off) input[type="image"]:not(.ibx-small),
-html:not(.ibx-off) .ibx-vector,
-html:not(.ibx-off) .ibx-bg-direct,
+:root:not(.ibx-off) img:not(.ibx-small),
+:root:not(.ibx-off) video:not(.ibx-small),
+:root:not(.ibx-off) canvas:not(.ibx-small),
+:root:not(.ibx-off) object[type^="image/"]:not(.ibx-small),
+:root:not(.ibx-off) embed[type^="image/"]:not(.ibx-small),
+:root:not(.ibx-off) input[type="image"]:not(.ibx-small),
+:root:not(.ibx-off) .ibx-vector,
+:root:not(.ibx-off) .ibx-media,
+:root:not(.ibx-off) .ibx-bg-direct,
+/*
+ * The document element itself, which is never a descendant of itself. Opening
+ * an .svg file on its own makes <svg> the root of the document, and then the
+ * picture to hide is the root element. There is no hover reveal for this case
+ * on purpose: the pointer is inside the root element whatever it does, so a
+ * reveal there would simply be permanent.
+ */
+:root:not(.ibx-off).ibx-vector,
+:root:not(.ibx-off).ibx-media,
+:root:not(.ibx-off).ibx-bg-direct,
 /* Blur - shadow trees. */
 :host-context(html:not(.ibx-off)) img:not(.ibx-small),
 :host-context(html:not(.ibx-off)) video:not(.ibx-small),
@@ -64,6 +76,7 @@ html:not(.ibx-off) .ibx-bg-direct,
 :host-context(html:not(.ibx-off)) embed[type^="image/"]:not(.ibx-small),
 :host-context(html:not(.ibx-off)) input[type="image"]:not(.ibx-small),
 :host-context(html:not(.ibx-off)) .ibx-vector,
+:host-context(html:not(.ibx-off)) .ibx-media,
 :host-context(html:not(.ibx-off)) .ibx-bg-direct {
   filter: var(--ibx-effect) !important;
 }
@@ -74,7 +87,7 @@ html:not(.ibx-off) .ibx-bg-direct,
  * exactly why it is gated too: switched off, the element goes back to whatever
  * position the page gave it, with nothing left behind.
  */
-html:not(.ibx-off) .ibx-bg-anchor,
+:root:not(.ibx-off) .ibx-bg-anchor,
 :host-context(html:not(.ibx-off)) .ibx-bg-anchor {
   position: relative !important;
 }
@@ -92,8 +105,8 @@ html:not(.ibx-off) .ibx-bg-anchor,
  * <html> needs its own selector in each flavour, since it is never a descendant
  * of itself.
  */
-html:not(.ibx-off) .ibx-bg-overlay::before,
-html:not(.ibx-off).ibx-bg-overlay::before,
+:root:not(.ibx-off) .ibx-bg-overlay::before,
+:root:not(.ibx-off).ibx-bg-overlay::before,
 :host-context(html:not(.ibx-off)) .ibx-bg-overlay::before {
   content: "" !important;
   position: absolute !important;
@@ -112,8 +125,8 @@ html:not(.ibx-off).ibx-bg-overlay::before,
  * that hides it has to cover the viewport too. Must stay after the rule above:
  * both have the same specificity.
  */
-html:not(.ibx-off) .ibx-bg-canvas::before,
-html:not(.ibx-off).ibx-bg-canvas::before,
+:root:not(.ibx-off) .ibx-bg-canvas::before,
+:root:not(.ibx-off).ibx-bg-canvas::before,
 :host-context(html:not(.ibx-off)) .ibx-bg-canvas::before {
   position: fixed !important;
   inset: calc(var(--ibx-blur-radius) * -2) !important;
@@ -126,14 +139,15 @@ html:not(.ibx-off).ibx-bg-canvas::before,
  * means the reveal waits and the blur comes straight back. Duration stays at
  * zero, so nothing is ever half revealed.
  */
-html.ibx-hover img,
-html.ibx-hover video,
-html.ibx-hover canvas,
-html.ibx-hover object[type^="image/"],
-html.ibx-hover embed[type^="image/"],
-html.ibx-hover input[type="image"],
-html.ibx-hover .ibx-vector,
-html.ibx-hover .ibx-bg-direct,
+:root.ibx-hover img,
+:root.ibx-hover video,
+:root.ibx-hover canvas,
+:root.ibx-hover object[type^="image/"],
+:root.ibx-hover embed[type^="image/"],
+:root.ibx-hover input[type="image"],
+:root.ibx-hover .ibx-vector,
+:root.ibx-hover .ibx-media,
+:root.ibx-hover .ibx-bg-direct,
 :host-context(html.ibx-hover) img,
 :host-context(html.ibx-hover) video,
 :host-context(html.ibx-hover) canvas,
@@ -141,6 +155,7 @@ html.ibx-hover .ibx-bg-direct,
 :host-context(html.ibx-hover) embed[type^="image/"],
 :host-context(html.ibx-hover) input[type="image"],
 :host-context(html.ibx-hover) .ibx-vector,
+:host-context(html.ibx-hover) .ibx-media,
 :host-context(html.ibx-hover) .ibx-bg-direct {
   transition: filter 0s 0s !important;
 }
@@ -150,19 +165,20 @@ html.ibx-hover .ibx-bg-direct,
  * that is the whole point: the pointer is asking to see the image as it is,
  * for as long as it rests there.
  */
-html.ibx-hover img:hover,
-html.ibx-hover video:hover,
-html.ibx-hover canvas:hover,
-html.ibx-hover object[type^="image/"]:hover,
-html.ibx-hover embed[type^="image/"]:hover,
-html.ibx-hover input[type="image"]:hover,
-html.ibx-hover .ibx-vector:hover,
-html.ibx-hover .ibx-bg-direct:hover {
+:root.ibx-hover img:hover,
+:root.ibx-hover video:hover,
+:root.ibx-hover canvas:hover,
+:root.ibx-hover object[type^="image/"]:hover,
+:root.ibx-hover embed[type^="image/"]:hover,
+:root.ibx-hover input[type="image"]:hover,
+:root.ibx-hover .ibx-vector:hover,
+:root.ibx-hover .ibx-media:hover,
+:root.ibx-hover .ibx-bg-direct:hover {
   filter: none !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }
 
-html.ibx-hover .ibx-bg-overlay:hover::before {
+:root.ibx-hover .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }
@@ -171,7 +187,7 @@ html.ibx-hover .ibx-bg-overlay:hover::before {
  * The pointer is over <body> almost all of the time, so a page wide background
  * would otherwise be revealed permanently. Must stay after the rule above.
  */
-html.ibx-hover .ibx-bg-canvas:hover::before {
+:root.ibx-hover .ibx-bg-canvas:hover::before {
   opacity: 1 !important;
 }
 
@@ -183,6 +199,7 @@ html.ibx-hover .ibx-bg-canvas:hover::before {
 :host-context(html.ibx-hover) embed[type^="image/"]:hover,
 :host-context(html.ibx-hover) input[type="image"]:hover,
 :host-context(html.ibx-hover) .ibx-vector:hover,
+:host-context(html.ibx-hover) .ibx-media:hover,
 :host-context(html.ibx-hover) .ibx-bg-direct:hover {
   filter: none !important;
   transition-delay: var(--ibx-hover-delay) !important;

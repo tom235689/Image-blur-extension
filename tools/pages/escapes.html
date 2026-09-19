@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ways an image can reach the screen</title>
+    <style>
+      body { font: 14px system-ui; margin: 0; padding: 16px; background: #fff; color: #111 }
+      .case { margin: 6px 0; padding: 6px; border: 1px solid #ccc; min-height: 70px }
+      #css-content { display: block; content: url("checker.png"); width: 120px; height: 120px }
+      #list-image { list-style-image: url("checker.png"); width: 200px }
+      #border-image { border: 30px solid transparent; border-image: url("checker.png") 30 round; width: 100px; height: 60px }
+      #shorthand { width: 120px; height: 120px; background: #eee url("checker.png") no-repeat center / cover }
+      #pseudo::before { content: ""; display: block; width: 120px; height: 120px; background-image: url("checker.png") }
+      #mask-image { width: 120px; height: 120px; background: #06c; -webkit-mask-image: url("checker.png"); mask-image: url("checker.png") }
+    </style>
+  </head>
+  <body>
+    <h1>every construct that puts a picture on the screen</h1>
+
+    <div class="case"><img id="plain" src="checker.png" width="120" height="120" /></div>
+
+    <div class="case"><img id="srcset" srcset="checker.png 1x" width="120" height="120" /></div>
+
+    <div class="case">
+      <picture><source srcset="checker.png" /><img id="picture" width="120" height="120" /></picture>
+    </div>
+
+    <div class="case"><object id="object-typed" type="image/png" data="checker.png" width="120" height="120"></object></div>
+
+    <div class="case"><object id="object-untyped" data="checker.png" width="120" height="120"></object></div>
+
+    <div class="case"><embed id="embed-untyped" src="checker.png" width="120" height="120" /></div>
+
+    <div class="case">
+      <svg id="svg-image" width="120" height="120"><image href="checker.png" width="120" height="120" /></svg>
+    </div>
+
+    <div class="case"><div id="css-content"></div></div>
+
+    <div class="case"><ul><li id="list-image">list marker</li></ul></div>
+
+    <div class="case"><div id="border-image"></div></div>
+
+    <div class="case"><div id="shorthand"></div></div>
+
+    <div class="case"><div id="pseudo"></div></div>
+
+    <div class="case"><div id="mask-image"></div></div>
+
+    <div class="case"><table id="table-background" background="checker.png" width="120" height="120"><tr><td>cell</td></tr></table></div>
+  </body>
+</html>
