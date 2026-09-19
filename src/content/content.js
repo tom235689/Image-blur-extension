@@ -113,7 +113,22 @@
     return '';
   }
 
+  /**
+   * Queues a class change, and only a change. Reading classList forces no
+   * layout, so the comparison belongs here in the read phase rather than in the
+   * write phase: every element is offered half a dozen classes it does not
+   * have, and on a large page that is tens of thousands of queued operations
+   * per pass whose entire effect is to decide to do nothing.
+   */
   function queueClass(ops, element, name, on) {
+    try {
+      if (element.classList.contains(name) === !!on) {
+        return;
+      }
+    } catch (error) {
+      /* No class list to read; nothing can be written either. */
+      return;
+    }
     ops.push({ element: element, name: name, on: on });
   }
 
@@ -121,13 +136,10 @@
     for (var i = 0; i < ops.length; i += 1) {
       var op = ops[i];
       try {
-        var list = op.element.classList;
         if (op.on) {
-          if (!list.contains(op.name)) {
-            list.add(op.name);
-          }
-        } else if (list.contains(op.name)) {
-          list.remove(op.name);
+          op.element.classList.add(op.name);
+        } else {
+          op.element.classList.remove(op.name);
         }
       } catch (error) {
         /* Detached or read only nodes are simply skipped. */
