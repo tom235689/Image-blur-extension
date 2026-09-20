@@ -140,6 +140,13 @@
    * which would need the tabs permission. No content script, no answer - that
    * is exactly the case where the extension cannot do anything anyway.
    */
+  function ask(done) {
+    chrome.tabs.sendMessage(tabId, { type: 'ibx-query' }, function (response) {
+      void chrome.runtime.lastError;
+      done(response || null);
+    });
+  }
+
   function loadTab() {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       var tab = tabs && tabs[0];
@@ -148,9 +155,18 @@
         return;
       }
       tabId = tab.id;
-      chrome.tabs.sendMessage(tab.id, { type: 'ibx-query' }, function (response) {
-        void chrome.runtime.lastError;
-        renderTab(response || null);
+      ask(function (response) {
+        if (response) {
+          renderTab(response);
+          return;
+        }
+        // A page part way through loading has no content script yet; only a
+        // second silence means the extension really cannot run there.
+        setTimeout(function () {
+          ask(function (retried) {
+            renderTab(retried || null);
+          });
+        }, 350);
       });
     });
   }

@@ -42,5 +42,16 @@ module.exports = {
       spared.ownFilterSmall, 'grayscale(1)');
     t.expect('media above it is still blurred',
       spared.ownFilter, 'blur(12px)');
+
+    await t.resetSettings();
+
+    // Reveal on hover needs a transition to carry its delay. Declaring that in
+    // the resting state would replace the transition the page declared there.
+    const transitions = await t.evaluate(`(() => {
+      const style = getComputedStyle(document.getElementById('own-transition'));
+      return { property: style.transitionProperty, duration: style.transitionDuration };
+    })()`);
+    t.expect('while blurring, the page keeps its own transition on its images',
+      [transitions.property, transitions.duration], ['opacity', '0.4s']);
   }
 };

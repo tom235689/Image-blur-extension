@@ -66,5 +66,37 @@ module.exports = {
       t.expect(page + ' has no untranslated keys left', await t.evaluate(LEFTOVER_KEYS), []);
       t.expect(page + ' names every control', await t.evaluate(UNNAMED_CONTROLS), []);
     }
+
+    // The options page is the one left open by the loop above.
+    const stored = () => t.worker.evaluate(
+      'new Promise((resolve) => chrome.storage.sync.get(null, resolve))',
+      { awaitPromise: true }
+    );
+
+    t.expect('the delay is editable while reveal on hover is on',
+      await t.evaluate("document.getElementById('hover-delay').disabled"), false);
+
+    await t.evaluate("document.getElementById('reveal-on-hover').click()");
+    await t.sleep(700);
+    t.expect('and greyed out once nothing is revealed at all',
+      await t.evaluate("document.getElementById('hover-delay').disabled"), true);
+
+    await t.evaluate("document.getElementById('reveal-on-hover').click()");
+    await t.sleep(700);
+
+    const add = (value) => t.evaluate(
+      '(() => { document.getElementById("site-input").value = ' + JSON.stringify(value) + ';' +
+      ' document.getElementById("add-form").dispatchEvent(new Event("submit", { cancelable: true })); })()'
+    );
+
+    await add('https://www.Example.com/gallery');
+    await t.sleep(800);
+    t.expect('the add form stores the bare host', (await stored()).excludedSites, ['example.com']);
+
+    // An entry for the parent domain already covers this one.
+    await add('images.example.com');
+    await t.sleep(800);
+    t.expect('a host the list already covers is not added twice',
+      (await stored()).excludedSites, ['example.com']);
   }
 };

@@ -108,6 +108,32 @@ async function launch(options) {
     10000
   );
   const worker = await cdp.connect(workerInfo.webSocketDebuggerUrl);
+  await worker.send('Runtime.enable');
+  await worker.send('Log.enable');
+  await page.send('Log.enable');
+
+  // Anything the extension throws, or logs at error level, is a failure in its
+  // own right: an unhandled rejection would otherwise pass quietly.
+  const errors = [];
+  const watch = (session, where) => {
+    session.on('Runtime.exceptionThrown', (params) => {
+      const details = params.exceptionDetails || {};
+      const text = (details.exception && details.exception.description) || details.text;
+      if (text) {
+        errors.push(where + ': ' + text);
+      }
+    });
+    session.on('Log.entryAdded', (params) => {
+      const entry = params.entry || {};
+      // A request a fixture failed to load is the fixture's business.
+      if (entry.level === 'error' && entry.source !== 'network' && entry.text) {
+        errors.push(where + ': ' + entry.text);
+      }
+    });
+  };
+
+  watch(page, 'page');
+  watch(worker, 'service worker');
 
   // The service worker seeds the stored defaults when the extension installs;
   // wait for that write so it cannot land on top of a setting a check makes.
@@ -119,6 +145,7 @@ async function launch(options) {
     page,
     worker,
     port,
+    errors,
     async close() {
       page.close();
       worker.close();

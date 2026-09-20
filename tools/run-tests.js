@@ -151,6 +151,18 @@ async function main() {
         console.log('    FAIL threw: ' + error.message);
       }
     }
+    if (session && session.errors.length) {
+      console.log('\nruntime errors from the extension');
+      const seen = new Set();
+      session.errors.forEach((entry) => {
+        if (seen.has(entry)) {
+          return;
+        }
+        seen.add(entry);
+        reporter.failures.push('runtime error / ' + entry.slice(0, 80));
+        console.log('    FAIL ' + entry);
+      });
+    }
   } finally {
     if (session) {
       await session.close();

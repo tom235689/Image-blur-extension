@@ -565,6 +565,9 @@
     for (var i = 0; i < records.length; i += 1) {
       var record = records[i];
       if (record.type === 'attributes') {
+        if (record.target === root() && record.attributeName === 'style') {
+          restoreRootVariables();
+        }
         pending.add(record.target);
         continue;
       }
@@ -663,6 +666,20 @@
    * show a badge for it. The first report after a load also says so, which is
    * how a pause is dropped when the tab reloads.
    */
+  /**
+   * The radius and the delay are inline custom properties on <html>, so a page
+   * that rewrites that style attribute wipes them and every blur on the page
+   * falls back to the stylesheet default.
+   */
+  function restoreRootVariables() {
+    var element = root();
+    if (!element || element.style.getPropertyValue('--ibx-blur-radius')) {
+      return;
+    }
+    element.style.setProperty('--ibx-blur-radius', settings.blurAmount + 'px');
+    element.style.setProperty('--ibx-hover-delay', settings.hoverDelay + 'ms');
+  }
+
   function reportState() {
     if (window.top !== window) {
       return;

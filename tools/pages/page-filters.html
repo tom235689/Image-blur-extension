@@ -8,6 +8,7 @@
       .case { margin: 10px 0; padding: 8px; border: 1px solid #ccc }
       /* A site styling its own images. Nothing here is the extension's business. */
       #own-filter { filter: grayscale(1) }
+      #own-transition { transition: opacity 400ms ease-in-out }
       #own-filter-small { filter: grayscale(1) }
       #plain-anchor { position: absolute; top: 0; left: 0 }
     </style>
@@ -25,6 +26,10 @@
 
     <div class="case">
       <img id="no-filter" src="checker.png" width="120" height="120" />
+    </div>
+
+    <div class="case">
+      <img id="own-transition" src="checker.png" width="120" height="120" />
     </div>
 
     <div class="case" style="position: relative; height: 40px">

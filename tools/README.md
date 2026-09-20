@@ -53,3 +53,6 @@ module.exports = {
 `hoverElement`, `setSettings`, `resetSettings`, `sleep` and `expect`. Settings
 are reset to the defaults before each check. Add `browser: false` for a check
 that needs no page at all.
+
+Anything the extension throws, or logs at error level, fails the run as well,
+which is how an unhandled rejection gets noticed instead of passing quietly.

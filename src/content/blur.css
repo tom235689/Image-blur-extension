@@ -135,30 +135,12 @@
 
 /*
  * Hover reveal timing. A transition takes its timing from the state being
- * entered, so putting the delay on the :hover rule and none on the plain rule
- * means the reveal waits and the blur comes straight back. Duration stays at
- * zero, so nothing is ever half revealed.
+ * entered, so the delay lives on the :hover rules below and nowhere else: the
+ * reveal waits, and leaving falls straight back to whatever the page declares.
+ * The resting state is deliberately left alone - declaring a transition there
+ * would replace the one the page put on its own images, and not blurring
+ * something has to mean leaving it exactly as the page styled it.
  */
-:root.ibx-hover img,
-:root.ibx-hover video,
-:root.ibx-hover canvas,
-:root.ibx-hover object[type^="image/"],
-:root.ibx-hover embed[type^="image/"],
-:root.ibx-hover input[type="image"],
-:root.ibx-hover .ibx-vector,
-:root.ibx-hover .ibx-media,
-:root.ibx-hover .ibx-bg-direct,
-:host-context(html.ibx-hover) img,
-:host-context(html.ibx-hover) video,
-:host-context(html.ibx-hover) canvas,
-:host-context(html.ibx-hover) object[type^="image/"],
-:host-context(html.ibx-hover) embed[type^="image/"],
-:host-context(html.ibx-hover) input[type="image"],
-:host-context(html.ibx-hover) .ibx-vector,
-:host-context(html.ibx-hover) .ibx-media,
-:host-context(html.ibx-hover) .ibx-bg-direct {
-  transition: filter 0s 0s !important;
-}
 
 /*
  * Reveal on hover - document tree. Revealing does set filter: none, and here
@@ -175,11 +157,15 @@
 :root.ibx-hover .ibx-media:hover,
 :root.ibx-hover .ibx-bg-direct:hover {
   filter: none !important;
+  transition-property: filter !important;
+  transition-duration: 0s !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }
 
 :root.ibx-hover .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
+  transition-property: opacity !important;
+  transition-duration: 0s !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }
 
@@ -202,10 +188,14 @@
 :host-context(html.ibx-hover) .ibx-media:hover,
 :host-context(html.ibx-hover) .ibx-bg-direct:hover {
   filter: none !important;
+  transition-property: filter !important;
+  transition-duration: 0s !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }
 
 :host-context(html.ibx-hover) .ibx-bg-overlay:hover::before {
   opacity: 0 !important;
+  transition-property: opacity !important;
+  transition-duration: 0s !important;
   transition-delay: var(--ibx-hover-delay) !important;
 }

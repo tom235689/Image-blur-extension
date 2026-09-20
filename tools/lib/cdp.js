@@ -10,15 +10,23 @@ function connect(webSocketUrl) {
   const state = {
     id: 0,
     pending: new Map(),
+    listeners: new Map(),
     socket: new WebSocket(webSocketUrl)
   };
 
   state.socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
-    const resolve = message.id && state.pending.get(message.id);
-    if (resolve) {
-      state.pending.delete(message.id);
-      resolve(message);
+    if (message.id) {
+      const resolve = state.pending.get(message.id);
+      if (resolve) {
+        state.pending.delete(message.id);
+        resolve(message);
+      }
+      return;
+    }
+    const handlers = state.listeners.get(message.method);
+    if (handlers) {
+      handlers.forEach((handler) => handler(message.params || {}));
     }
   };
 
@@ -50,6 +58,13 @@ function connect(webSocketUrl) {
         throw new Error('evaluate failed: ' + text);
       }
       return result.result.value;
+    },
+
+    /** Subscribes to a protocol event, such as Runtime.exceptionThrown. */
+    on(method, handler) {
+      const handlers = state.listeners.get(method) || [];
+      handlers.push(handler);
+      state.listeners.set(method, handlers);
     },
 
     close() {

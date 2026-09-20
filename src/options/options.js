@@ -21,6 +21,7 @@
   var minVectorInput = document.getElementById('min-vector-size');
   var modeInput = document.getElementById('mode');
   var hoverDelayInput = document.getElementById('hover-delay');
+  var hoverDelayField = document.getElementById('hover-delay-field');
   var addForm = document.getElementById('add-form');
   var siteInput = document.getElementById('site-input');
   var addError = document.getElementById('add-error');
@@ -102,6 +103,7 @@
     minVectorInput.value = String(settings.minVectorSize);
     modeInput.value = settings.mode;
     hoverDelayInput.value = String(settings.hoverDelay);
+    renderHoverDelayState(settings.revealOnHover);
     excluded = settings.excludedSites.slice();
     renderSites();
   }
@@ -122,7 +124,14 @@
     save({ blurAmount: api.clampBlur(blurInput.value) });
   });
 
+  // A delay means nothing while nothing is ever revealed.
+  function renderHoverDelayState(revealOnHover) {
+    hoverDelayInput.disabled = !revealOnHover;
+    hoverDelayField.classList.toggle('is-disabled', !revealOnHover);
+  }
+
   hoverInput.addEventListener('change', function () {
+    renderHoverDelayState(hoverInput.checked);
     save({ revealOnHover: hoverInput.checked });
   });
 
@@ -160,7 +169,7 @@
     addError.hidden = true;
     siteInput.value = '';
 
-    if (excluded.indexOf(host) !== -1) {
+    if (api.isExcluded(host, excluded)) {
       flashStatus(label('statusSiteDuplicate', [host], host + ' is already excluded'));
       return;
     }

@@ -4,6 +4,30 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Reveal on hover declared its transition on the resting state, which replaced
+  whatever transition a page had put on its own images. It now belongs to the
+  hovered state alone, where the delay is all it was ever needed for.
+- The blur radius and the hover delay are put back if a page rewrites the style
+  attribute on the root element, instead of every blur on that page silently
+  falling back to the stylesheet default.
+- The popup asks the tab a second time before concluding the extension cannot
+  run there, which a page still loading would otherwise trigger.
+- Adding a host the exception list already covers through a parent domain says
+  so, rather than storing an entry that changes nothing.
+- The hover delay is greyed out while reveal on hover is off, since it has
+  nothing to delay.
+
+### Added
+
+- The test harness fails a run on anything the extension throws or logs as an
+  error, so an unhandled rejection cannot hide behind passing assertions.
+- .gitattributes, so line endings are settled in the repository rather than
+  renegotiated on every checkout.
+
 ## [1.0.0] - 2026-09-19
 
 First release intended for the Chrome Web Store.

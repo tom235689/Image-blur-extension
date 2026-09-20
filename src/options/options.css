@@ -138,6 +138,10 @@ input[type="range"] {
   font-size: 12px;
 }
 
+.field.is-disabled {
+  opacity: 0.5;
+}
+
 .check {
   display: flex;
   align-items: center;
