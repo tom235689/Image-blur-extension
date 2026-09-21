@@ -55,6 +55,7 @@ function createContext(session, site, defaults, reporter, name) {
     page: session.page,
     worker: session.worker,
     settingsModule: settingsModule,
+    site: site,
 
     async open(page, waitMs) {
       await session.page.send('Page.navigate', { url: site + '/' + page });

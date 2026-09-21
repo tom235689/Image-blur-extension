@@ -42,7 +42,9 @@
   function renderEnabled(enabled) {
     document.body.classList.toggle('is-off', !enabled);
     stateLabel.textContent = enabled
-      ? label('popupStateOn', 'Blurring images on every site')
+      ? (settings.siteListMode === 'only'
+        ? label('popupStateListed', 'Blurring images on the listed sites')
+        : label('popupStateOn', 'Blurring images on every site'))
       : label('popupStateOff', 'Blurring is turned off');
   }
 
@@ -53,7 +55,7 @@
     renderBlurValue(settings.blurAmount);
     renderEnabled(settings.enabled);
     if (host) {
-      siteInput.checked = !api.isExcluded(host, settings.excludedSites);
+      siteInput.checked = api.isSiteBlurred(host, settings);
     }
   }
 
@@ -66,7 +68,7 @@
     host = api.normalizeHost(state.host);
     if (host) {
       siteHost.textContent = host;
-      siteInput.checked = !api.isExcluded(host, settings.excludedSites);
+      siteInput.checked = api.isSiteBlurred(host, settings);
       siteRow.hidden = false;
     }
 
@@ -108,7 +110,7 @@
   });
 
   siteInput.addEventListener('change', function () {
-    var list = api.setSiteBlurred(settings.excludedSites, host, siteInput.checked);
+    var list = api.setSiteBlurred(settings.excludedSites, host, siteInput.checked, settings.siteListMode);
     settings.excludedSites = list;
     save({ excludedSites: list });
   });

@@ -6,6 +6,20 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The site list can now mean either of the two things a site list can mean:
+  the hosts to leave alone, as before, or the only hosts to blur. The second
+  is for someone who wants the blur on a handful of sites rather than on all
+  of them.
+- Settings can be exported to a JSON file and imported back, for a backup or
+  for carrying a long site list to another computer. An imported file goes
+  through the same validation as every other path, so nothing in it can put
+  the extension into a state its own interface could not produce.
+- `npm run screenshots` takes the store screenshots with the extension really
+  running, and `npm run images` draws the pictures the page they are taken on
+  uses, so the listing never borrows an image and never drifts out of date.
+
 ### Fixed
 
 - Reveal on hover declared its transition on the resting state, which replaced

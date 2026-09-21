@@ -9,7 +9,7 @@
     <main class="page">
       <header>
         <h1 data-i18n="appName">Image Blur</h1>
-        <p class="muted" data-i18n="optionsIntro">Images, CSS background images and videos are blurred on every site except the ones listed below.</p>
+        <p class="muted" data-i18n="optionsIntro">Images, CSS background images and videos are blurred while text, buttons and layout stay sharp. Every setting below applies everywhere the blur is on.</p>
       </header>
 
       <section class="card">
@@ -75,15 +75,35 @@
       </section>
 
       <section class="card">
-        <h2 data-i18n="optionsSitesHeading">Excluded sites</h2>
-        <p class="muted" data-i18n="optionsSitesNote">Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.</p>
+        <h2 data-i18n="optionsSitesHeading">Site list</h2>
+        <div class="field">
+          <label for="site-list-mode" data-i18n="optionsSitesModeLabel">What this list means</label>
+          <span class="field-input">
+            <select id="site-list-mode">
+              <option value="exceptions" data-i18n="optionsSitesModeExceptions">Blur everywhere except these</option>
+              <option value="only" data-i18n="optionsSitesModeOnly">Blur only on these</option>
+            </select>
+          </span>
+        </div>
+        <p class="muted" id="sites-note" data-i18n="optionsSitesNote">Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.</p>
         <form id="add-form" class="add-row">
           <input type="text" id="site-input" data-i18n-label="optionsSitesInputLabel" aria-label="Host to leave unblurred" data-i18n-placeholder="optionsSitesPlaceholder" placeholder="example.com" spellcheck="false" autocomplete="off" />
           <button type="submit" data-i18n="optionsSitesAdd">Add</button>
         </form>
         <p id="add-error" class="error" data-i18n="optionsSitesError" hidden>Enter a host name such as example.com</p>
         <ul id="site-list" class="sites"></ul>
-        <p id="empty-note" class="muted" data-i18n="optionsSitesEmpty">No excluded sites yet.</p>
+        <p id="empty-note" class="muted" data-i18n="optionsSitesEmpty">No sites listed yet.</p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="optionsBackupHeading">Settings file</h2>
+        <p class="muted" data-i18n="optionsBackupNote">Keep a copy of every setting, or carry it to another computer. The file is plain JSON and nothing in it leaves this browser.</p>
+        <div class="backup-row">
+          <button type="button" id="export-settings" class="ghost" data-i18n="optionsBackupExport">Export</button>
+          <button type="button" id="import-settings" class="ghost" data-i18n="optionsBackupImport">Import</button>
+          <input type="file" id="import-file" accept="application/json,.json" data-i18n-label="optionsBackupImport" aria-label="Import" hidden />
+        </div>
+        <p id="backup-error" class="error" data-i18n="optionsBackupError" hidden>That file does not hold Image Blur settings.</p>
       </section>
 
       <footer>

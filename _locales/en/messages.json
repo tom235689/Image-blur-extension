@@ -1,107 +1,47 @@
 {
-  "appName": {
+  "actionTitle": {
     "message": "Image Blur",
-    "description": "Extension name, shown in the browser and on the store listing."
+    "description": "Toolbar button tooltip before a tab has reported its state."
   },
   "appDescription": {
     "message": "Blurs images, CSS background images and videos on every page you visit.",
     "description": "Store listing summary, shown under the extension name."
   },
-
-  "actionTitle": {
+  "appName": {
     "message": "Image Blur",
-    "description": "Toolbar button tooltip before a tab has reported its state."
+    "description": "Extension name, shown in the browser and on the store listing."
   },
-  "commandToggleBlur": {
-    "message": "Turn image blurring on or off",
-    "description": "Keyboard shortcut label on the browser shortcuts page."
+  "badgeOff": {
+    "message": "OFF",
+    "description": "Toolbar badge text when nothing is being blurred. Keep it to three characters."
   },
   "commandPauseTab": {
     "message": "Reveal images on this tab until it is reloaded",
     "description": "Keyboard shortcut label on the browser shortcuts page."
   },
-
-  "badgeOff": {
-    "message": "OFF",
-    "description": "Toolbar badge text when nothing is being blurred. Keep it to three characters."
+  "commandToggleBlur": {
+    "message": "Turn image blurring on or off",
+    "description": "Keyboard shortcut label on the browser shortcuts page."
   },
-  "tooltipTurnedOff": {
-    "message": "Image Blur - turned off",
-    "description": "Toolbar tooltip when the master switch is off."
+  "optionsBackupError": {
+    "message": "That file does not hold Image Blur settings.",
+    "description": "Shown when an imported file cannot be read as settings."
   },
-  "tooltipBlurring": {
-    "message": "Image Blur - blurring images",
-    "description": "Toolbar tooltip when the extension is working normally."
+  "optionsBackupExport": {
+    "message": "Export",
+    "description": "Button that saves the settings to a file."
   },
-  "tooltipPausedTab": {
-    "message": "Image Blur - paused on this tab",
-    "description": "Toolbar tooltip when this tab is temporarily paused."
+  "optionsBackupHeading": {
+    "message": "Settings file",
+    "description": "Heading of the export and import card."
   },
-  "tooltipTabOff": {
-    "message": "Image Blur - not blurring this tab",
-    "description": "Toolbar tooltip when this host is on the exception list."
+  "optionsBackupImport": {
+    "message": "Import",
+    "description": "Button that reads settings back from a file."
   },
-
-  "unitPixels": {
-    "message": "$AMOUNT$ px",
-    "description": "A length in pixels, such as 12 px.",
-    "placeholders": {
-      "amount": { "content": "$1", "example": "12" }
-    }
-  },
-
-  "popupStateOn": {
-    "message": "Blurring images on every site",
-    "description": "Popup subtitle while the master switch is on."
-  },
-  "popupStateOff": {
-    "message": "Blurring is turned off",
-    "description": "Popup subtitle while the master switch is off."
-  },
-  "popupToggleTitle": {
-    "message": "Turn blurring on or off",
-    "description": "Tooltip on the popup master switch."
-  },
-  "popupBlurStrength": {
-    "message": "Blur strength",
-    "description": "Label above the blur radius slider."
-  },
-  "popupThisSite": {
-    "message": "This site",
-    "description": "Label next to the host name of the tab in front of the user."
-  },
-  "popupSiteToggleTitle": {
-    "message": "Blur images on this site",
-    "description": "Tooltip on the per site switch."
-  },
-  "popupPause": {
-    "message": "Pause on this tab",
-    "description": "Button that reveals everything on the current tab."
-  },
-  "popupResume": {
-    "message": "Resume on this tab",
-    "description": "Button shown once the current tab is already paused."
-  },
-  "popupPauseNote": {
-    "message": "Until the tab is reloaded. Shortcut: Alt+Shift+P",
-    "description": "Explains how long a pause lasts."
-  },
-  "popupUnavailable": {
-    "message": "Image Blur cannot run on this page.",
-    "description": "Shown on pages where extensions are not allowed, such as the new tab page."
-  },
-  "popupOpenOptions": {
-    "message": "Excluded sites and more settings",
-    "description": "Link at the bottom of the popup that opens the options page."
-  },
-
-  "optionsTitle": {
-    "message": "Image Blur options",
-    "description": "Title of the options page."
-  },
-  "optionsIntro": {
-    "message": "Images, CSS background images and videos are blurred on every site except the ones listed below.",
-    "description": "Introductory line at the top of the options page."
+  "optionsBackupNote": {
+    "message": "Keep a copy of every setting, or carry it to another computer. The file is plain JSON and nothing in it leaves this browser.",
+    "description": "Explanation of the export and import buttons."
   },
   "optionsBlurHeading": {
     "message": "Blur strength",
@@ -111,6 +51,14 @@
     "message": "Radius applied to every blurred element",
     "description": "Label for the blur radius slider."
   },
+  "optionsEffectBlackout": {
+    "message": "Blackout",
+    "description": "Effect that blurs the image and then drops it to black."
+  },
+  "optionsEffectBlur": {
+    "message": "Blur",
+    "description": "Effect that softens the image but keeps its colours."
+  },
   "optionsEffectHeading": {
     "message": "How images are hidden",
     "description": "Section heading for the effect picker."
@@ -119,37 +67,17 @@
     "message": "Effect",
     "description": "Label for the effect dropdown."
   },
-  "optionsEffectBlur": {
-    "message": "Blur",
-    "description": "Effect that softens the image but keeps its colours."
-  },
-  "optionsEffectBlackout": {
-    "message": "Blackout",
-    "description": "Effect that blurs the image and then drops it to black."
-  },
   "optionsEffectNote": {
     "message": "Blur softens the image and keeps its colours; blackout blurs it and then drops it to black, which leaves nothing to read at any strength.",
     "description": "Explains the difference between the two effects."
   },
-  "optionsSizeHeading": {
-    "message": "Size limits",
-    "description": "Section heading."
+  "optionsHoverDelayLabel": {
+    "message": "Wait before revealing",
+    "description": "Label for the hover delay field."
   },
-  "optionsSizeNote": {
-    "message": "Anything smaller than its limit in both directions is left sharp. Set a limit to 0 to blur every size.",
-    "description": "Explains how the size limits are applied."
-  },
-  "optionsMinImageLabel": {
-    "message": "Images, videos, canvases and background images",
-    "description": "Label for the raster media size limit."
-  },
-  "optionsMinVectorLabel": {
-    "message": "Inline SVG",
-    "description": "Label for the inline SVG size limit."
-  },
-  "optionsMinVectorHint": {
-    "message": "most sites draw their interface icons this way",
-    "description": "Why inline SVG gets a size limit of its own."
+  "optionsHoverDelayNote": {
+    "message": "Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.",
+    "description": "Explains why the reveal is delayed."
   },
   "optionsHoverHeading": {
     "message": "Reveal on hover",
@@ -163,52 +91,21 @@
     "message": "When this is off, blurred media stays blurred no matter where the pointer goes.",
     "description": "Explains what turning hover reveal off does."
   },
-  "optionsHoverDelayLabel": {
-    "message": "Wait before revealing",
-    "description": "Label for the hover delay field."
+  "optionsIntro": {
+    "message": "Images, CSS background images and videos are blurred while text, buttons and layout stay sharp. Every setting below applies everywhere the blur is on.",
+    "description": "Introduction at the top of the options page."
   },
-  "optionsHoverDelayNote": {
-    "message": "Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.",
-    "description": "Explains why the reveal is delayed."
+  "optionsMinImageLabel": {
+    "message": "Images, videos, canvases and background images",
+    "description": "Label for the raster media size limit."
   },
-  "optionsSitesHeading": {
-    "message": "Excluded sites",
-    "description": "Section heading for the exception list."
+  "optionsMinVectorHint": {
+    "message": "most sites draw their interface icons this way",
+    "description": "Why inline SVG gets a size limit of its own."
   },
-  "optionsSitesNote": {
-    "message": "Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.",
-    "description": "Explains that the exception list matches sub domains too."
-  },
-  "optionsSitesInputLabel": {
-    "message": "Host to leave unblurred",
-    "description": "Accessible name of the box where a host is typed; a placeholder alone does not name a field."
-  },
-  "optionsSitesPlaceholder": {
-    "message": "example.com",
-    "description": "Placeholder in the box where a host is typed."
-  },
-  "optionsSitesAdd": {
-    "message": "Add",
-    "description": "Button that adds the typed host to the exception list."
-  },
-  "optionsSitesError": {
-    "message": "Enter a host name such as example.com",
-    "description": "Shown when the typed text is not a usable host name."
-  },
-  "optionsSitesEmpty": {
-    "message": "No excluded sites yet.",
-    "description": "Shown while the exception list is empty."
-  },
-  "optionsSitesRemove": {
-    "message": "Remove",
-    "description": "Button that takes one host off the exception list."
-  },
-  "optionsSitesRemoveLabel": {
-    "message": "Remove $HOST$",
-    "description": "Screen reader label for the remove button of one host.",
-    "placeholders": {
-      "host": { "content": "$1", "example": "example.com" }
-    }
+  "optionsMinVectorLabel": {
+    "message": "Inline SVG",
+    "description": "Label for the inline SVG size limit."
   },
   "optionsReset": {
     "message": "Reset all settings",
@@ -218,38 +115,202 @@
     "message": "Reset every Image Blur setting to its default?",
     "description": "Confirmation asked before settings are reset."
   },
-
-  "statusSaved": {
-    "message": "Saved",
-    "description": "Shown briefly after a setting is stored."
+  "optionsSitesAdd": {
+    "message": "Add",
+    "description": "Button that adds the typed host to the exception list."
   },
-  "statusSaveFailed": {
-    "message": "Could not save",
-    "description": "Shown when writing a setting failed."
+  "optionsSitesEmpty": {
+    "message": "No sites listed yet.",
+    "description": "Shown when the site list is empty."
+  },
+  "optionsSitesError": {
+    "message": "Enter a host name such as example.com",
+    "description": "Shown when the typed text is not a usable host name."
+  },
+  "optionsSitesHeading": {
+    "message": "Site list",
+    "description": "Heading of the site list card on the options page."
+  },
+  "optionsSitesInputLabel": {
+    "message": "Host to leave unblurred",
+    "description": "Accessible name of the box where a host is typed; a placeholder alone does not name a field."
+  },
+  "optionsSitesInputLabelOnly": {
+    "message": "Host to blur",
+    "description": "Accessible name of the host field while the list names the sites to blur."
+  },
+  "optionsSitesModeExceptions": {
+    "message": "Blur everywhere except these",
+    "description": "Site list mode: the list names the sites to leave alone."
+  },
+  "optionsSitesModeLabel": {
+    "message": "What this list means",
+    "description": "Label of the select that decides whether the list names sites to skip or sites to blur."
+  },
+  "optionsSitesModeOnly": {
+    "message": "Blur only on these",
+    "description": "Site list mode: the list names the only sites to blur."
+  },
+  "optionsSitesNote": {
+    "message": "Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.",
+    "description": "Explains that the exception list matches sub domains too."
+  },
+  "optionsSitesNoteOnly": {
+    "message": "Only these hosts are blurred; every other site is left alone. A host also covers its sub domains, so example.com covers images.example.com.",
+    "description": "Explanation shown under the site list while it names the sites to blur."
+  },
+  "optionsSitesPlaceholder": {
+    "message": "example.com",
+    "description": "Placeholder in the box where a host is typed."
+  },
+  "optionsSitesRemove": {
+    "message": "Remove",
+    "description": "Button that takes one host off the exception list."
+  },
+  "optionsSitesRemoveLabel": {
+    "message": "Remove $HOST$",
+    "description": "Screen reader label for the remove button of one host.",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "optionsSizeHeading": {
+    "message": "Size limits",
+    "description": "Section heading."
+  },
+  "optionsSizeNote": {
+    "message": "Anything smaller than its limit in both directions is left sharp. Set a limit to 0 to blur every size.",
+    "description": "Explains how the size limits are applied."
+  },
+  "optionsTitle": {
+    "message": "Image Blur options",
+    "description": "Title of the options page."
+  },
+  "popupBlurStrength": {
+    "message": "Blur strength",
+    "description": "Label above the blur radius slider."
+  },
+  "popupOpenOptions": {
+    "message": "Excluded sites and more settings",
+    "description": "Link at the bottom of the popup that opens the options page."
+  },
+  "popupPause": {
+    "message": "Pause on this tab",
+    "description": "Button that reveals everything on the current tab."
+  },
+  "popupPauseNote": {
+    "message": "Until the tab is reloaded. Shortcut: Alt+Shift+P",
+    "description": "Explains how long a pause lasts."
+  },
+  "popupResume": {
+    "message": "Resume on this tab",
+    "description": "Button shown once the current tab is already paused."
+  },
+  "popupSiteToggleTitle": {
+    "message": "Blur images on this site",
+    "description": "Tooltip on the per site switch."
+  },
+  "popupStateListed": {
+    "message": "Blurring images on the listed sites",
+    "description": "Popup subtitle while the site list names the only sites to blur."
+  },
+  "popupStateOff": {
+    "message": "Blurring is turned off",
+    "description": "Popup subtitle while the master switch is off."
+  },
+  "popupStateOn": {
+    "message": "Blurring images on every site",
+    "description": "Popup subtitle while the master switch is on."
+  },
+  "popupThisSite": {
+    "message": "This site",
+    "description": "Label next to the host name of the tab in front of the user."
+  },
+  "popupToggleTitle": {
+    "message": "Turn blurring on or off",
+    "description": "Tooltip on the popup master switch."
+  },
+  "popupUnavailable": {
+    "message": "Image Blur cannot run on this page.",
+    "description": "Shown on pages where extensions are not allowed, such as the new tab page."
+  },
+  "statusExported": {
+    "message": "Settings exported",
+    "description": "Status line after writing the settings file."
+  },
+  "statusImported": {
+    "message": "Settings imported",
+    "description": "Status line after reading a settings file back."
   },
   "statusReset": {
     "message": "Settings reset",
     "description": "Shown after every setting has been put back to its default."
   },
+  "statusSaveFailed": {
+    "message": "Could not save",
+    "description": "Shown when writing a setting failed."
+  },
+  "statusSaved": {
+    "message": "Saved",
+    "description": "Shown briefly after a setting is stored."
+  },
   "statusSiteAdded": {
     "message": "Added $HOST$",
     "description": "Shown after a host joins the exception list.",
     "placeholders": {
-      "host": { "content": "$1", "example": "example.com" }
-    }
-  },
-  "statusSiteRemoved": {
-    "message": "Removed $HOST$",
-    "description": "Shown after a host leaves the exception list.",
-    "placeholders": {
-      "host": { "content": "$1", "example": "example.com" }
+      "host": {
+        "content": "$1",
+        "example": "example.com"
+      }
     }
   },
   "statusSiteDuplicate": {
     "message": "$HOST$ is already excluded",
     "description": "Shown when the typed host is already on the list.",
     "placeholders": {
-      "host": { "content": "$1", "example": "example.com" }
+      "host": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "statusSiteRemoved": {
+    "message": "Removed $HOST$",
+    "description": "Shown after a host leaves the exception list.",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "tooltipBlurring": {
+    "message": "Image Blur - blurring images",
+    "description": "Toolbar tooltip when the extension is working normally."
+  },
+  "tooltipPausedTab": {
+    "message": "Image Blur - paused on this tab",
+    "description": "Toolbar tooltip when this tab is temporarily paused."
+  },
+  "tooltipTabOff": {
+    "message": "Image Blur - not blurring this tab",
+    "description": "Toolbar tooltip when this host is on the exception list."
+  },
+  "tooltipTurnedOff": {
+    "message": "Image Blur - turned off",
+    "description": "Toolbar tooltip when the master switch is off."
+  },
+  "unitPixels": {
+    "message": "$AMOUNT$ px",
+    "description": "A length in pixels, such as 12 px.",
+    "placeholders": {
+      "amount": {
+        "content": "$1",
+        "example": "12"
+      }
     }
   }
 }

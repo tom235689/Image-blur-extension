@@ -635,7 +635,7 @@
       return;
     }
 
-    active = settings.enabled && !paused && !api.isExcluded(currentHost(), settings.excludedSites);
+    active = settings.enabled && !paused && api.isSiteBlurred(currentHost(), settings);
 
     element.style.setProperty('--ibx-blur-radius', settings.blurAmount + 'px');
     element.style.setProperty('--ibx-hover-delay', settings.hoverDelay + 'ms');

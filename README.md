@@ -35,10 +35,16 @@ the first page loads.
 - **Reveal on hover** - on by default, after a 300 ms wait so a pointer merely
   passing through uncovers nothing. The cover comes back the moment the pointer
   leaves. Turn it off and blurred media stays blurred.
-- **Excluded sites** - a host also covers its sub domains, so `example.com`
-  covers `images.example.com`. Because of that, turning the site switch back on
-  for `images.example.com` removes the `example.com` entry that was covering
-  it: a list of hosts to skip cannot say "this host, but not that sub domain".
+- **Site list** - either the hosts to leave alone, or the only hosts to blur,
+  whichever the options page is set to. A host also covers its sub domains, so
+  `example.com` covers `images.example.com`. Because of that, turning the site
+  switch back on for `images.example.com` removes the `example.com` entry that
+  was covering it: a list of hosts cannot say "this host, but not that sub
+  domain of it".
+- **Settings file** - export every setting to JSON and import it back, for a
+  backup or for a second computer. An imported file is validated the same way
+  every other path is, so nothing in it can produce a state the interface
+  could not.
 - **Left alone means left alone** - wherever nothing is blurred, whether the
   host is excluded, the extension is switched off, the tab is paused or the
   image is below the size limit, the page keeps whatever filter it applied to
@@ -131,8 +137,10 @@ actually compute. See [tools/README.md](tools/README.md).
 ## Building a release
 
 ```
-npm run check     validate the package without writing anything
-npm run build     write dist/image-blur-<version>.zip
+npm run check        validate the package without writing anything
+npm run build        write dist/image-blur-<version>.zip
+npm run screenshots  retake store/screenshots with the extension running
+npm run images       redraw the pictures those screenshots are taken on
 ```
 
 The build refuses to package while the manifest version disagrees with

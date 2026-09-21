@@ -15,6 +15,13 @@
   var HOVER_DELAY_MAX = 2000;
   var MODES = ['blur', 'blackout'];
 
+  /**
+   * What the site list means. 'exceptions' leaves the listed hosts alone and
+   * blurs everywhere else; 'only' is the mirror image, for someone who wants
+   * the blur on a handful of sites rather than on all of them.
+   */
+  var SITE_LIST_MODES = ['exceptions', 'only'];
+
   var DEFAULT_SETTINGS = {
     enabled: true,
     blurAmount: 12,
@@ -23,6 +30,8 @@
     hoverDelay: 300,
     /** blur softens the image; blackout replaces it with a dark block. */
     mode: 'blur',
+    /** Whether the site list names what to leave alone, or what to blur. */
+    siteListMode: 'exceptions',
     /** Raster media smaller than this in both directions is left sharp. 0 blurs everything. */
     minImageSize: 0,
     /** Inline SVG smaller than this in both directions is left sharp: interface icons. */
@@ -96,6 +105,9 @@
       revealOnHover: source.revealOnHover !== false,
       hoverDelay: Math.min(HOVER_DELAY_MAX, Math.max(0, clampNumber(source.hoverDelay, DEFAULT_SETTINGS.hoverDelay))),
       mode: MODES.indexOf(source.mode) === -1 ? DEFAULT_SETTINGS.mode : source.mode,
+      siteListMode: SITE_LIST_MODES.indexOf(source.siteListMode) === -1
+        ? DEFAULT_SETTINGS.siteListMode
+        : source.siteListMode,
       minImageSize: clampSize(source.minImageSize, DEFAULT_SETTINGS.minImageSize),
       minVectorSize: clampSize(source.minVectorSize, DEFAULT_SETTINGS.minVectorSize),
       excludedSites: normalizeSiteList(source.excludedSites)
@@ -124,27 +136,48 @@
     return false;
   }
 
+  /** Whether the list names this host, whatever the list happens to mean. */
+  function isListed(hostname, sites) {
+    return isExcluded(hostname, sites);
+  }
+
   /**
-   * The exception list after turning blurring on or off for one host.
-   *
-   * Turning it on has to drop every entry that covers the host, not only an
-   * entry equal to it. A stored "example.com" excludes "images.example.com"
-   * too, so removing nothing would leave the switch saying one thing and the
-   * page doing another. The parent goes with it, because a list of hosts to
-   * skip cannot say "this host, but not that sub domain of it".
+   * Whether this host gets blurred at all, which is the question every surface
+   * actually asks. In the default mode the list names the hosts to leave alone;
+   * in the other it names the only hosts to blur, and everywhere else is left
+   * as it is.
    */
-  function setSiteBlurred(excludedSites, hostname, blurred) {
+  function isSiteBlurred(hostname, settings) {
+    var source = settings && typeof settings === 'object' ? settings : {};
+    var listed = isListed(hostname, source.excludedSites);
+    return source.siteListMode === 'only' ? listed : !listed;
+  }
+
+  /**
+   * The site list after turning blurring on or off for one host.
+   *
+   * In the default mode the list holds what to skip, so blurring a host means
+   * taking it off; in the other mode the list holds what to blur, so blurring a
+   * host means putting it on. Either way, removing has to drop every entry that
+   * covers the host rather than only one equal to it: a stored "example.com"
+   * also covers "images.example.com", so removing nothing would leave the
+   * switch saying one thing and the page doing another. The parent goes with
+   * it, because a list of hosts cannot say "this host, but not that sub domain".
+   */
+  function setSiteBlurred(sites, hostname, blurred, siteListMode) {
     var host = normalizeHost(hostname);
-    var list = normalizeSiteList(excludedSites);
+    var list = normalizeSiteList(sites);
     if (!host) {
       return list;
     }
-    if (blurred) {
-      return list.filter(function (entry) {
-        return !covers(entry, host);
-      });
+
+    var wantsListed = siteListMode === 'only' ? blurred : !blurred;
+    if (wantsListed) {
+      return isListed(host, list) ? list : normalizeSiteList(list.concat(host));
     }
-    return isExcluded(host, list) ? list : normalizeSiteList(list.concat(host));
+    return list.filter(function (entry) {
+      return !covers(entry, host);
+    });
   }
 
   function storage() {
@@ -197,6 +230,7 @@
     SIZE_MAX: SIZE_MAX,
     HOVER_DELAY_MAX: HOVER_DELAY_MAX,
     MODES: MODES,
+    SITE_LIST_MODES: SITE_LIST_MODES,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     clampBlur: clampBlur,
     clampSize: clampSize,
@@ -204,6 +238,8 @@
     normalizeSiteList: normalizeSiteList,
     normalizeSettings: normalizeSettings,
     isExcluded: isExcluded,
+    isListed: isListed,
+    isSiteBlurred: isSiteBlurred,
     setSiteBlurred: setSiteBlurred,
     readSettings: readSettings,
     writeSettings: writeSettings

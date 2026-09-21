@@ -138,6 +138,12 @@ input[type="range"] {
   font-size: 12px;
 }
 
+.backup-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .field.is-disabled {
   opacity: 0.5;
 }

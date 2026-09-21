@@ -27,10 +27,17 @@
   var addError = document.getElementById('add-error');
   var siteList = document.getElementById('site-list');
   var emptyNote = document.getElementById('empty-note');
+  var siteListModeInput = document.getElementById('site-list-mode');
+  var sitesNote = document.getElementById('sites-note');
+  var exportButton = document.getElementById('export-settings');
+  var importButton = document.getElementById('import-settings');
+  var importFile = document.getElementById('import-file');
+  var backupError = document.getElementById('backup-error');
   var resetButton = document.getElementById('reset');
   var statusLabel = document.getElementById('status');
 
   var excluded = [];
+  var siteListMode = api.DEFAULT_SETTINGS.siteListMode;
   var writeTimer = 0;
   var statusTimer = 0;
 
@@ -104,6 +111,9 @@
     modeInput.value = settings.mode;
     hoverDelayInput.value = String(settings.hoverDelay);
     renderHoverDelayState(settings.revealOnHover);
+    siteListMode = settings.siteListMode;
+    siteListModeInput.value = settings.siteListMode;
+    renderSiteListMode();
     excluded = settings.excludedSites.slice();
     renderSites();
   }
@@ -181,6 +191,91 @@
 
   siteInput.addEventListener('input', function () {
     addError.hidden = true;
+  });
+
+  /** The same list reads as two opposite instructions, so the wording follows it. */
+  function renderSiteListMode() {
+    var isOnly = siteListMode === 'only';
+    sitesNote.textContent = isOnly
+      ? label('optionsSitesNoteOnly', null,
+        'Only these hosts are blurred; every other site is left alone. A host also covers its sub domains, so example.com covers images.example.com.')
+      : label('optionsSitesNote', null,
+        'Nothing is blurred on these hosts. A host also covers its sub domains, so example.com covers images.example.com.');
+    siteInput.setAttribute('aria-label', isOnly
+      ? label('optionsSitesInputLabelOnly', null, 'Host to blur')
+      : label('optionsSitesInputLabel', null, 'Host to leave unblurred'));
+  }
+
+  siteListModeInput.addEventListener('change', function () {
+    siteListMode = siteListModeInput.value;
+    renderSiteListMode();
+    save({ siteListMode: siteListMode });
+  });
+
+  /**
+   * Settings as a file. An extension page may hand the browser a blob to save,
+   * so this needs no downloads permission and nothing leaves the profile.
+   */
+  exportButton.addEventListener('click', function () {
+    api.readSettings().then(function (settings) {
+      var payload = { format: 'image-blur-settings', version: 1, settings: settings };
+      var url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = 'image-blur-settings.json';
+      link.click();
+      // Revoking straight away can cancel the save in progress.
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 10000);
+      flashStatus(label('statusExported', null, 'Settings exported'));
+    });
+  });
+
+  importButton.addEventListener('click', function () {
+    backupError.hidden = true;
+    importFile.click();
+  });
+
+  importFile.addEventListener('change', function () {
+    var file = importFile.files && importFile.files[0];
+    if (!file) {
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed = null;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch (error) {
+        parsed = null;
+      }
+
+      // Anything unrecognised in the file falls back to its default rather than
+      // reaching storage, so a hand edited file cannot put the extension into a
+      // state its own interface could not produce.
+      var source = parsed && typeof parsed === 'object'
+        ? (parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : parsed)
+        : null;
+      if (!source) {
+        backupError.hidden = false;
+        return;
+      }
+
+      var settings = api.normalizeSettings(source);
+      api.writeSettings(settings).then(function (ok) {
+        render(settings);
+        flashStatus(ok
+          ? label('statusImported', null, 'Settings imported')
+          : label('statusSaveFailed', null, 'Could not save'));
+      });
+    };
+    reader.onerror = function () {
+      backupError.hidden = false;
+    };
+    reader.readAsText(file);
+    importFile.value = '';
   });
 
   resetButton.addEventListener('click', function () {

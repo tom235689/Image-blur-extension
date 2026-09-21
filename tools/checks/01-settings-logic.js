@@ -52,10 +52,35 @@ module.exports = {
       revealOnHover: true,
       hoverDelay: 300,
       mode: 'blur',
+      siteListMode: 'exceptions',
       minImageSize: 0,
       minVectorSize: 48,
       excludedSites: []
     });
+
+    t.expect('an unknown site list mode falls back',
+      api.normalizeSettings({ siteListMode: 'sideways' }).siteListMode, 'exceptions');
+
+    // The same list, read the two opposite ways round.
+    const listed = { excludedSites: ['example.com'] };
+    t.expect('by default a listed host is the one left alone',
+      [api.isSiteBlurred('images.example.com', listed), api.isSiteBlurred('other.com', listed)],
+      [false, true]);
+
+    const only = { siteListMode: 'only', excludedSites: ['example.com'] };
+    t.expect('the other way round, a listed host is the only one blurred',
+      [api.isSiteBlurred('images.example.com', only), api.isSiteBlurred('other.com', only)],
+      [true, false]);
+
+    t.expect('blurring a host in the default mode takes it off the list',
+      api.setSiteBlurred(['example.com', 'other.com'], 'images.example.com', true, 'exceptions'),
+      ['other.com']);
+    t.expect('blurring a host in the other mode puts it on',
+      api.setSiteBlurred(['example.com'], 'other.com', true, 'only'),
+      ['example.com', 'other.com']);
+    t.expect('and not blurring it takes it off again',
+      api.setSiteBlurred(['example.com', 'other.com'], 'other.com', false, 'only'),
+      ['example.com']);
 
     t.expect('site list deduped and sorted',
       api.normalizeSettings({ excludedSites: ['B.com', 'https://b.com/x', 'a.com', ''] }).excludedSites,

@@ -15,6 +15,8 @@
   "scripts": {
     "test": "node tools/run-tests.js",
     "check": "node tools/build.js --check",
-    "build": "node tools/build.js"
+    "build": "node tools/build.js",
+    "screenshots": "node tools/screenshots.js",
+    "images": "node tools/make-showcase-images.js"
   }
 }
