@@ -73,10 +73,14 @@ source: the only `fetch` reads a file out of the extension package itself.
 ## Before uploading
 
 1. `npm test` - the whole suite against a real browser.
+1. `npm run screenshots` - if anything on screen has changed since the last
+   release.
 2. `npm run build` - writes `dist/image-blur-<version>.zip` and refuses if the
    package does not hold together.
 3. Upload that zip. It contains `manifest.json`, `icons/`, `src/` and
    `_locales/` and nothing else.
 
-Screenshots are the one thing not kept here: the store wants 1280x800 or
-640x400, and they have to be taken by hand.
+Screenshots are in `store/screenshots`, at the 1280x800 the dashboard wants.
+`npm run screenshots` retakes them with the extension really running, so they
+cannot drift away from what it does; every picture in them is drawn by
+`npm run images` rather than borrowed from anywhere.
