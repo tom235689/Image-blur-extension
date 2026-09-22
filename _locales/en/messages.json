@@ -332,8 +332,8 @@
     }
   },
   "statusSiteDuplicate": {
-    "message": "$HOST$ is already excluded",
-    "description": "Shown when the typed host is already on the list.",
+    "message": "$HOST$ is already on the list",
+    "description": "Shown when a host is added that the list already covers, by itself or through a parent domain. $HOST$ is a host name such as example.com.",
     "placeholders": {
       "host": {
         "content": "$1",

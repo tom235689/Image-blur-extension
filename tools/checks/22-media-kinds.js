@@ -10,7 +10,11 @@ const TARGETS = {
 
 const BLUR = 'blur(12px)';
 
-/** Everything blurred but the kind named, which keeps the filter the page gave it. */
+/**
+ * Everything blurred except the kind named, which is left as the page drew it.
+ * Only the image carries a filter of its own here, so that is what being left
+ * alone looks like for it; for the rest it is no filter at all.
+ */
 function only(sharp) {
   const result = {};
   Object.keys(TARGETS).forEach((key) => {
@@ -70,5 +74,22 @@ module.exports = {
     t.expect('with every kind off the tab counts as blurring nothing at all',
       [off, await t.filters(TARGETS)],
       [true, { photo: 'grayscale(1)', clip: 'none', painting: 'none', tile: 'none', artwork: 'none' }]);
+
+    // Nothing is scanned while nothing is being blurred, so whatever the page
+    // added in the meantime is unknown when a kind comes back on. A background
+    // image is the case that matters: no selector can find one on its own.
+    await t.evaluate(`(() => {
+      const late = document.createElement('div');
+      late.id = 'late-tile';
+      late.style.cssText = 'width:200px;height:120px;background-image:url("checker.png");background-size:cover';
+      document.body.appendChild(late);
+    })()`);
+
+    await t.setSettings({
+      blurTypes: { images: true, videos: true, canvases: true, backgrounds: true, vectors: true }
+    });
+    t.expect('switching the kinds back on picks up what arrived while nothing was',
+      await t.filters({ photo: '#photo', late: '#late-tile' }),
+      { photo: BLUR, late: BLUR });
   }
 };

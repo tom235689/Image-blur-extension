@@ -60,8 +60,10 @@ All notable changes to this project are recorded here. The format follows
   falling back to the stylesheet default.
 - The popup asks the tab a second time before concluding the extension cannot
   run there, which a page still loading would otherwise trigger.
-- Adding a host the exception list already covers through a parent domain says
-  so, rather than storing an entry that changes nothing.
+- Adding a host the site list already covers through a parent domain says so,
+  rather than storing an entry that changes nothing. It no longer says the host
+  is "already excluded", which is the wrong word by half when the list has been
+  set to mean the only hosts to blur.
 - The hover delay is greyed out while reveal on hover is off, since it has
   nothing to delay.
 
@@ -69,6 +71,18 @@ All notable changes to this project are recorded here. The format follows
 
 - The popup says so when blurring is switched on but every kind of media has
   been switched off, instead of claiming to blur images on every site.
+- The one matcher behind the site list is called isListed rather than
+  isExcluded, and the options page calls its copy of the list sites, now that
+  the list can mean either thing. The stored key keeps its old name on purpose:
+  renaming it would lose the list of everyone who already has one.
+- Comments that had stopped being true were corrected. The stylesheet no longer
+  says the blur and the hover reveal are settled by the order they are written
+  in - the reveal outranks the blur by itself now that both carry a kind gate,
+  which was checked by writing them the wrong way round and watching the reveal
+  still win - and the two sliders no longer call waiting for a pause in the
+  dragging a throttle.
+- The fixture server answers on both loopback addresses, so the cross origin
+  check cannot fail on a machine where localhost means ::1 before 127.0.0.1.
 - The link at the foot of the popup is aligned to the start of the line rather
   than to the left, so it follows a right to left translation.
 - The options page is photographed in two halves for the store. It is twice as

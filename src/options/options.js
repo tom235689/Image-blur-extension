@@ -1,4 +1,8 @@
-/** Options page: blur strength, hover behaviour and the excluded site list. */
+/**
+ * Options page: every setting there is - strength and effect, which kinds of
+ * media are blurred, the size limits, the reveal, the site list and the
+ * settings file.
+ */
 (function () {
   'use strict';
 
@@ -39,7 +43,7 @@
   var resetButton = document.getElementById('reset');
   var statusLabel = document.getElementById('status');
 
-  var excluded = [];
+  var sites = [];
   var siteListMode = api.DEFAULT_SETTINGS.siteListMode;
   var writeTimer = 0;
   var statusTimer = 0;
@@ -88,9 +92,9 @@
 
   function renderSites() {
     siteList.textContent = '';
-    emptyNote.hidden = excluded.length > 0;
+    emptyNote.hidden = sites.length > 0;
 
-    excluded.forEach(function (host) {
+    sites.forEach(function (host) {
       var item = document.createElement('li');
 
       var name = document.createElement('span');
@@ -103,11 +107,11 @@
       remove.textContent = label('optionsSitesRemove', null, 'Remove');
       remove.setAttribute('aria-label', label('optionsSitesRemoveLabel', [host], 'Remove ' + host));
       remove.addEventListener('click', function () {
-        excluded = excluded.filter(function (entry) {
+        sites = sites.filter(function (entry) {
           return entry !== host;
         });
         renderSites();
-        save({ excludedSites: excluded }, label('statusSiteRemoved', [host], 'Removed ' + host));
+        save({ excludedSites: sites }, label('statusSiteRemoved', [host], 'Removed ' + host));
       });
 
       item.appendChild(name);
@@ -133,12 +137,14 @@
     siteListMode = settings.siteListMode;
     siteListModeInput.value = settings.siteListMode;
     renderSiteListMode();
-    excluded = settings.excludedSites.slice();
+    sites = settings.excludedSites.slice();
     renderSites();
   }
 
-  // Throttled while dragging to stay inside the storage write quota, with the
-  // released value always written in full.
+  // The preview follows the handle, but the write waits for a pause in the
+  // dragging: chrome.storage.sync allows 120 writes a minute, and a drag can
+  // ask for more than that on its own. The released value is written in full
+  // whatever the waiting write did.
   blurInput.addEventListener('input', function () {
     var amount = api.clampBlur(blurInput.value);
     blurValue.textContent = i18n.pixels(amount);
@@ -220,14 +226,16 @@
     addError.hidden = true;
     siteInput.value = '';
 
-    if (api.isExcluded(host, excluded)) {
-      flashStatus(label('statusSiteDuplicate', [host], host + ' is already excluded'));
+    // Already covered, by itself or by a parent entry. Saying so beats storing
+    // a second entry that changes nothing.
+    if (api.isListed(host, sites)) {
+      flashStatus(label('statusSiteDuplicate', [host], host + ' is already on the list'));
       return;
     }
 
-    excluded = api.normalizeSiteList(excluded.concat(host));
+    sites = api.normalizeSiteList(sites.concat(host));
     renderSites();
-    save({ excludedSites: excluded }, label('statusSiteAdded', [host], 'Added ' + host));
+    save({ excludedSites: sites }, label('statusSiteAdded', [host], 'Added ' + host));
   });
 
   siteInput.addEventListener('input', function () {

@@ -60,6 +60,11 @@
     minImageSize: 0,
     /** Inline SVG smaller than this in both directions is left sharp: interface icons. */
     minVectorSize: 48,
+    /**
+     * The site list. The key is what the first version called it, and renaming
+     * it would lose the list of everyone who already has one, so it keeps that
+     * name whichever of the two things siteListMode makes it mean.
+     */
     excludedSites: []
   };
 
@@ -161,16 +166,17 @@
   }
 
   /**
-   * A stored host also covers its sub domains, so "example.com" excludes
-   * "images.example.com" as well.
+   * Whether the site list names this host, whatever the list happens to mean.
+   * An entry covers its sub domains as well, so "example.com" covers
+   * "images.example.com".
    */
-  function isExcluded(hostname, excludedSites) {
+  function isListed(hostname, sites) {
     var host = normalizeHost(hostname);
-    if (!host || !Array.isArray(excludedSites)) {
+    if (!host || !Array.isArray(sites)) {
       return false;
     }
-    for (var i = 0; i < excludedSites.length; i += 1) {
-      if (covers(normalizeHost(excludedSites[i]), host)) {
+    for (var i = 0; i < sites.length; i += 1) {
+      if (covers(normalizeHost(sites[i]), host)) {
         return true;
       }
     }
@@ -190,11 +196,6 @@
       }
     }
     return false;
-  }
-
-  /** Whether the list names this host, whatever the list happens to mean. */
-  function isListed(hostname, sites) {
-    return isExcluded(hostname, sites);
   }
 
   /**
@@ -296,7 +297,6 @@
     normalizeSiteList: normalizeSiteList,
     normalizeBlurTypes: normalizeBlurTypes,
     normalizeSettings: normalizeSettings,
-    isExcluded: isExcluded,
     isListed: isListed,
     blursAnything: blursAnything,
     isSiteBlurred: isSiteBlurred,

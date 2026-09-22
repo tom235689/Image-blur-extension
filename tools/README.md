@@ -52,8 +52,11 @@ module.exports = {
 
 `t` gives you `open`, `evaluate`, `filters`, `classesOf`, `hover`,
 `hoverElement`, `inFrame`, `setSettings`, `resetSettings`, `sleep` and
-`expect`, plus `site` and `otherSite`. Settings are reset to the defaults
-before each check. Add `browser: false` for a check that needs no page at all.
+`expect`, plus `site` and `otherSite`. `t.page` and `t.worker` are the raw
+protocol connections to the tab and to the service worker, for the few things
+that need them - dispatching a key, or reading storage as the extension sees
+it. Settings are reset to the defaults before each check. Add `browser: false`
+for a check that needs no page at all.
 
 `hover` and `hoverElement` take the protocol's modifier bitmask as a last
 argument - 1 Alt, 2 Ctrl, 4 Meta, 8 Shift - for the reveal that waits on a key.

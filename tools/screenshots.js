@@ -69,18 +69,9 @@ const SHOTS = [
         { awaitPromise: true }
       );
       await harness.sleep(2000);
+      // The popup reads that page from the background, and capture() brings it
+      // back to the front before photographing it.
       await open(session, 'chrome-extension://' + session.extensionId + '/src/popup/popup.html');
-
-      // It has read the page it was asked about by now, so it can come to the
-      // front to be photographed: capturing a background tab means waiting for
-      // a frame that is in no hurry to arrive.
-      await session.worker.evaluate(`(async () => {
-        const tabs = await chrome.tabs.query({ url: 'chrome-extension://*/src/popup/popup.html' });
-        if (tabs.length) {
-          await chrome.tabs.update(tabs[0].id, { active: true });
-        }
-      })()`, { awaitPromise: true });
-      await harness.sleep(600);
     },
     // The popup is 280 px wide; a full width shot of it would be mostly empty.
     metrics: { width: 320, height: 420 },
@@ -120,8 +111,12 @@ async function open(session, url) {
   await harness.sleep(2200);
 }
 
+/**
+ * Takes one picture, and reports the size it came out at: what is asked for is
+ * a viewport, what arrives can be a slice of a page taller than one.
+ */
 async function capture(session, shot) {
-  const metrics = shot.metrics || { width: WIDTH, height: HEIGHT };
+  var metrics = shot.metrics || { width: WIDTH, height: HEIGHT };
   await session.page.send('Emulation.setDeviceMetricsOverride', {
     width: metrics.width,
     height: metrics.height,
@@ -157,17 +152,17 @@ async function capture(session, shot) {
     const top = shot.half === 'bottom' ? size.cut : 0;
     const height = (shot.half === 'bottom' ? size.height : size.cut || size.height) - top;
     clip = { x: 0, y: top, width: size.width, height, scale: 1 };
-    shot.metrics = { width: size.width, height };
+    metrics = { width: size.width, height };
   }
 
-  // Shot 3 leaves the popup in front of this tab, and a tab in the background
-  // is not painting: asking it for a picture waits for a frame nothing is in
-  // any hurry to produce.
+  // The popup shot leaves an extension page in front of this tab, and a tab in
+  // the background is not painting: asking it for a picture waits for a frame
+  // nothing is in any hurry to produce.
   await session.page.send('Page.bringToFront');
 
   const result = await session.page.send('Page.captureScreenshot',
     clip ? { format: 'png', clip } : { format: 'png' });
-  return Buffer.from(result.data, 'base64');
+  return { image: Buffer.from(result.data, 'base64'), metrics: shot.metrics ? metrics : null };
 }
 
 /**
@@ -176,17 +171,17 @@ async function capture(session, shot) {
  * the options page is taller than any window - is scaled down to fit whole
  * rather than cropped.
  */
-async function pad(session, shot, image) {
-  if (!shot.metrics) {
+async function pad(session, metrics, image) {
+  if (!metrics) {
     return image;
   }
   const margin = 56;
   const scale = Math.min(
     1,
-    (WIDTH - margin) / shot.metrics.width,
-    (HEIGHT - margin) / shot.metrics.height
+    (WIDTH - margin) / metrics.width,
+    (HEIGHT - margin) / metrics.height
   );
-  const width = Math.round(shot.metrics.width * scale);
+  const width = Math.round(metrics.width * scale);
   const dataUrl = 'data:image/png;base64,' + image.toString('base64');
 
   await session.page.send('Emulation.setDeviceMetricsOverride', {
@@ -223,7 +218,7 @@ async function main() {
   try {
     for (const shot of SHOTS) {
       const raw = await capture(session, shot);
-      const image = await pad(session, shot, raw);
+      const image = await pad(session, raw.metrics, raw.image);
       fs.writeFileSync(path.join(OUTPUT, shot.file), image);
       console.log('store/screenshots/' + shot.file + ' - ' + shot.describe);
     }

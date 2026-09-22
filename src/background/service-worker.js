@@ -133,7 +133,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
   });
 
   // Blurring starts the moment this is installed, which is startling without a
-  // word of explanation, and the exception list and the shortcuts are not
+  // word of explanation, and the site list and the shortcuts are not
   // discoverable from the toolbar icon alone. Shown once, on a real install.
   if (details && details.reason === 'install') {
     try {

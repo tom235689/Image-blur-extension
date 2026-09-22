@@ -44,8 +44,8 @@ has any way to read the result on another machine.
   marking which elements carry an image. Nothing about the page is sent
   anywhere, because nothing is sent anywhere at all.
 
-The exception list is the one place a host name is written down, and only
-because you typed it in to keep that site unblurred.
+The site list is the one place a host name is written down, and only because
+you typed it in to say what should happen there.
 
 ## Verifying this
 

@@ -14,15 +14,15 @@ module.exports = {
     t.expect('blank rejected', api.normalizeHost('   '), '');
     t.expect('nonsense rejected', api.normalizeHost('not a host'), '');
 
-    t.expect('sub domain excluded', api.isExcluded('images.example.com', ['example.com']), true);
-    t.expect('exact host excluded', api.isExcluded('example.com', ['example.com']), true);
-    t.expect('suffix is not a match', api.isExcluded('notexample.com', ['example.com']), false);
-    t.expect('prefix is not a match', api.isExcluded('example.com.evil.com', ['example.com']), false);
+    t.expect('an entry covers a sub domain of it', api.isListed('images.example.com', ['example.com']), true);
+    t.expect('and the host itself', api.isListed('example.com', ['example.com']), true);
+    t.expect('a suffix is not a match', api.isListed('notexample.com', ['example.com']), false);
+    t.expect('a prefix is not a match', api.isListed('example.com.evil.com', ['example.com']), false);
 
     // Turning a site back on has to beat every entry that covers it, or the
     // switch in the popup reports a change it did not make.
-    t.expect('excluding a site adds it', api.setSiteBlurred([], 'example.com', false), ['example.com']);
-    t.expect('excluding it twice changes nothing',
+    t.expect('leaving a site alone adds it', api.setSiteBlurred([], 'example.com', false), ['example.com']);
+    t.expect('doing it twice changes nothing',
       api.setSiteBlurred(['example.com'], 'example.com', false), ['example.com']);
     t.expect('a sub domain already covered is not added again',
       api.setSiteBlurred(['example.com'], 'images.example.com', false), ['example.com']);

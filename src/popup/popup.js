@@ -23,7 +23,10 @@
   var unavailable = document.getElementById('unavailable');
 
   var writeTimer = 0;
-  var settings = api.DEFAULT_SETTINGS;
+  // A copy rather than the shared defaults: the site switch below writes the
+  // new list into this object, and the defaults are read by every other
+  // surface in this page's process.
+  var settings = api.normalizeSettings(null);
   var tabId = null;
   var host = '';
 
@@ -102,9 +105,10 @@
     save({ enabled: enabledInput.checked });
   });
 
-  // Dragging previews live, but chrome.storage.sync only allows 120 writes per
-  // minute, so the preview is throttled and the final value is written on
-  // release no matter what the throttled writes did.
+  // The preview follows the handle, but the write waits for a pause in the
+  // dragging: chrome.storage.sync allows 120 writes a minute, and a drag can
+  // ask for more than that on its own. The released value is written in full
+  // whatever the waiting write did.
   blurInput.addEventListener('input', function () {
     var amount = api.clampBlur(blurInput.value);
     renderBlurValue(amount);

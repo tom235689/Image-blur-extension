@@ -11,20 +11,29 @@
  * entitled to put its own filter on its own images; a rule that switched the
  * blur off would win over that filter too, because it has to carry !important
  * to survive a site that marks its own image rules important. So every rule is
- * instead written not to match in the first place: gated on
- * :root:not(.ibx-off), and excluding the elements the size limit spared.
+ * instead written not to match in the first place: gated on :root:not(.ibx-off)
+ * and on the kind of media, and excluding the elements a size limit spared.
  *
  * The exception is the hover reveal near the bottom, which does set
  * filter: none. That is not a way of switching anything off: it is the pointer
- * asking to see one image as it is, and only for as long as it rests there.
+ * asking to see one image as it is, and only for as long as it rests there. It
+ * carries every gate the blur carries, and for the same reason: on an element
+ * this sheet never blurred, filter: none would take away the page's own.
  *
  * Selectors come in two flavours because a shadow tree cannot see <html>:
  * ":root:not(.ibx-off) img" for the document, and
  * ":host-context(html:not(.ibx-off)) img" for the same rule inside a shadow
- * root. Their specificities are equal, so within each flavour the later rule
- * wins and the order below is load bearing: blur, then hover reveal.
+ * root. The two never compete, each applying in one tree only, so every rule
+ * is written in both.
  *
- * ibx-off   - extension disabled, this host is excluded, or this tab is paused
+ * Where two rules here can match the same element, whichever has to win says
+ * so where it stands. The reveal outranks the blur by itself, carrying :hover
+ * on top of the same gate. The two pairs that are equal - the viewport sized
+ * copy of a page background, and the rule that stops hovering revealing it -
+ * are settled by their order, and each says so above itself.
+ *
+ * ibx-off   - nothing is blurred here: switched off, no kind of media left to
+ *             blur, this site left alone, or this tab paused
  * ibx-hover - reveal the element the pointer is over
  *
  * One kind of media at a time can be left alone as well, which is another
@@ -32,10 +41,6 @@
  * long after the first paint, so an element could not be spared in time.
  * ibx-skip-image, ibx-skip-video, ibx-skip-canvas, ibx-skip-background,
  * ibx-skip-vector - that kind is not blurred at all.
- *
- * Every rule that spares something has to spare it in the hover reveal too.
- * Revealing sets filter: none, which on an element that was never blurred
- * would take away the filter the page itself asked for.
  *
  * Elements carrying a CSS background image are tagged by the content script:
  * ibx-bg-direct  - no text inside, so the element itself can be blurred

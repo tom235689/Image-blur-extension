@@ -171,11 +171,6 @@
     }
   }
 
-  /**
-   * The service worker hands over the stylesheet text; a content script cannot
-   * read its own resources unless they are web accessible, and exposing them
-   * to every page just to style shadow trees is not worth it.
-   */
   /** Whether it is still worth holding on to a root, or asking again. */
   function sheetStillComing() {
     return sheetInFlight || sheetAttempt < SHEET_RETRY_DELAYS.length;
@@ -188,6 +183,12 @@
     rootsAwaitingSheet.clear();
   }
 
+  /**
+   * Asks the service worker for the stylesheet text, which is the only way to
+   * get at it: a content script cannot read its own resources unless they are
+   * declared web accessible, and exposing them to every page just to style
+   * shadow trees is not worth it.
+   */
   function requestShadowSheet() {
     if (shadowSheet || sheetInFlight || sheetAttempt >= SHEET_RETRY_DELAYS.length) {
       return;
@@ -311,11 +312,14 @@
   }
 
   /**
-   * Whether blur.css actually blurs this element, which mirrors its selectors:
-   * only an image button among inputs, and only image content among objects and
-   * embeds. A tag alone is not enough - <input type="text"> and an <object>
-   * holding a PDF share their tag with blurred media but are never blurred, and
-   * tagging them would put a class on a page element for no reason.
+   * Whether blur.css has a selector for this element as replaced media, which
+   * this mirrors: only an image button among inputs, and only image content
+   * among objects and embeds. A tag alone is not enough - <input type="text">
+   * and an <object> holding a PDF share their tag with blurred media but are
+   * never blurred, and tagging them would put a class on a page element for no
+   * reason. Whether the blur is switched on for that kind is a separate
+   * question, and not one asked here: the class this decides says what an
+   * element is, not what is currently being done to it.
    */
   function isBlurredMedia(element, upper) {
     if (upper === 'IMG' || upper === 'VIDEO' || upper === 'CANVAS') {
@@ -793,9 +797,9 @@
     applyRootState();
     watchRoot();
 
-    // Only a change of activation needs the tree walked again: the radius and
-    // the hover mode are carried by the custom property and the classes above,
-    // so dragging the slider must not restart a full scan on every write.
+    // Only a change of activation needs the tree walked again: everything else
+    // travels on the root element, which applyRootState has just written, so
+    // dragging the slider must not restart a full scan on every write.
     if (active && !scanning) {
       scanning = true;
       startScanning();

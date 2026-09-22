@@ -2,8 +2,9 @@
 
 A Chrome extension (Manifest V3) that blurs the images on every page you visit:
 `<img>` elements, CSS background images, `<video>`, `<canvas>` and large inline
-`<svg>` artwork. Blurring is on everywhere by default; hosts you add to the
-exception list are left untouched.
+`<svg>` artwork. Blurring is on everywhere by default; the hosts you put on the
+site list are left untouched, or are the only ones blurred, whichever way round
+you set that list to be read.
 
 ## Install (unpacked)
 
@@ -12,8 +13,8 @@ exception list are left untouched.
 3. Choose **Load unpacked** and select this folder.
 
 Chrome 102 or newer. The options page opens once on a fresh install, because
-blurring starts immediately and the exception list is worth knowing about before
-the first page loads.
+blurring starts immediately and the site list is worth knowing about before the
+first page loads.
 
 ## Using it
 
@@ -22,7 +23,7 @@ the first page loads.
 - **Keyboard shortcuts** - Alt+Shift+B turns blurring on or off, Alt+Shift+P
   pauses it on the current tab. Both can be rebound at chrome://extensions/shortcuts.
 - **Pause on this tab** - a temporary reveal that lasts until the tab reloads,
-  for when the exception list would be too permanent.
+  for when the site list would be too permanent.
 - **Effect** - blur softens the image; blackout blurs it and then drops it to
   black, so there is nothing left to read at any strength.
 - **What gets blurred** - images, videos, canvas drawings, CSS background
@@ -245,9 +246,9 @@ and the test suite additionally fails on a key nothing asks for.
   the scan reaches it, because there is no selector for the stylesheet to blur
   it with beforehand. Everything a selector can reach is blurred before the
   first paint instead.
-- On an excluded site images may be blurred for a few milliseconds until the
-  stored settings arrive. That direction is deliberate: erring towards blurred is
-  safer than flashing an image that should have been hidden.
+- On a site the list leaves alone, images may be blurred for a few milliseconds
+  until the stored settings arrive. That direction is deliberate: erring towards
+  blurred is safer than flashing an image that should have been hidden.
 
 ## Layout
 
