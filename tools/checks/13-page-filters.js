@@ -43,6 +43,14 @@ module.exports = {
     t.expect('media above it is still blurred',
       spared.ownFilter, 'blur(12px)');
 
+    // The reveal is the one rule here that does set filter: none. On media that
+    // was never blurred it would take away the filter the page asked for, so it
+    // has to spare whatever the blur spared.
+    await t.hoverElement('#own-filter-small');
+    t.expect('and keeps it while the pointer rests on it',
+      (await t.filters(TARGETS)).ownFilterSmall, 'grayscale(1)');
+    await t.hover(4, 4);
+
     await t.resetSettings();
 
     // Reveal on hover needs a transition to carry its delay. Declaring that in

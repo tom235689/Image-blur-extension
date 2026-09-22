@@ -51,12 +51,44 @@ module.exports = {
       blurAmount: 12,
       revealOnHover: true,
       hoverDelay: 300,
+      revealKey: 'none',
       mode: 'blur',
+      blurTypes: {
+        images: true,
+        videos: true,
+        canvases: true,
+        backgrounds: true,
+        vectors: true
+      },
       siteListMode: 'exceptions',
       minImageSize: 0,
       minVectorSize: 48,
       excludedSites: []
     });
+
+    t.expect('an unknown reveal key falls back',
+      api.normalizeSettings({ revealKey: 'meta' }).revealKey, 'none');
+
+    // A settings file from an older version names no kind at all, and a hand
+    // written one can name anything. Either way the answer has to be a whole
+    // set of kinds, and a missing one has to end up blurred rather than not.
+    t.expect('only an explicit false turns a kind off, and nothing else survives',
+      api.normalizeSettings({ blurTypes: { videos: false, images: 'yes', nonsense: true } }).blurTypes,
+      { images: true, videos: false, canvases: true, backgrounds: true, vectors: true });
+
+    const shared = api.normalizeSettings(null).blurTypes;
+    shared.images = false;
+    t.expect('each answer is a fresh object rather than the defaults themselves',
+      api.normalizeSettings(null).blurTypes.images, true);
+
+    t.expect('with a kind left on, something is being blurred',
+      api.blursAnything(api.normalizeSettings({ blurTypes: { images: false, videos: false } })), true);
+    t.expect('with every kind off, nothing is',
+      api.blursAnything(api.normalizeSettings({
+        blurTypes: { images: false, videos: false, canvases: false, backgrounds: false, vectors: false }
+      })), false);
+    t.expect('settings that name no kinds blur everything',
+      api.blursAnything({}), true);
 
     t.expect('an unknown site list mode falls back',
       api.normalizeSettings({ siteListMode: 'sideways' }).siteListMode, 'exceptions');

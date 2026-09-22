@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const cdp = require('./lib/cdp');
 const harness = require('./lib/harness');
 const server = require('./lib/server');
 const settingsModule = require('./lib/settings-module');
@@ -56,6 +57,11 @@ function createContext(session, site, defaults, reporter, name) {
     worker: session.worker,
     settingsModule: settingsModule,
     site: site,
+    /**
+     * The same pages under a different host name. One server answers to both,
+     * so a frame loaded from here is genuinely cross origin.
+     */
+    otherSite: site.replace('127.0.0.1', 'localhost'),
 
     async open(page, waitMs) {
       await session.page.send('Page.navigate', { url: site + '/' + page });
@@ -78,18 +84,40 @@ function createContext(session, site, defaults, reporter, name) {
       return context.setSettings(defaults);
     },
 
-    async hover(x, y) {
-      await session.page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'none' });
+    /** modifiers is the protocol's bitmask: 1 Alt, 2 Ctrl, 4 Meta, 8 Shift. */
+    async hover(x, y, modifiers) {
+      await session.page.send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved', x, y, button: 'none', modifiers: modifiers || 0
+      });
       await harness.sleep(400);
     },
 
     /** Moves the pointer to the middle of the first element matching selector. */
-    async hoverElement(selector) {
+    async hoverElement(selector, modifiers) {
       const box = await context.evaluate(
         '(() => { const r = document.querySelector(' + JSON.stringify(selector) + ').getBoundingClientRect();' +
         ' return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()'
       );
-      await context.hover(box.x, box.y);
+      await context.hover(box.x, box.y, modifiers);
+    },
+
+    /**
+     * Evaluates inside a cross origin frame, which the page connection cannot
+     * reach: such a frame is a target of its own, with its own connection.
+     */
+    async inFrame(urlPart, expression) {
+      const targets = await cdp.targets(session.port);
+      const target = targets.find((entry) => entry.type === 'iframe' && entry.url.indexOf(urlPart) !== -1);
+      if (!target) {
+        return 'NO SUCH FRAME';
+      }
+      const connection = await cdp.connect(target.webSocketDebuggerUrl);
+      try {
+        await connection.send('Runtime.enable');
+        return await connection.evaluate(expression);
+      } finally {
+        connection.close();
+      }
     },
 
     /** Reads the computed filter of several elements at once: { name: selector }. */

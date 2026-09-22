@@ -22,6 +22,9 @@
   var modeInput = document.getElementById('mode');
   var hoverDelayInput = document.getElementById('hover-delay');
   var hoverDelayField = document.getElementById('hover-delay-field');
+  var revealKeyInput = document.getElementById('reveal-key');
+  var revealKeyField = document.getElementById('reveal-key-field');
+  var typesNone = document.getElementById('types-none');
   var addForm = document.getElementById('add-form');
   var siteInput = document.getElementById('site-input');
   var addError = document.getElementById('add-error');
@@ -43,6 +46,11 @@
 
   blurInput.min = String(api.BLUR_MIN);
   blurInput.max = String(api.BLUR_MAX);
+
+  // One checkbox per kind, named after the kind itself so the two cannot drift.
+  var typeInputs = api.MEDIA_KINDS.map(function (kind) {
+    return { kind: kind, element: document.getElementById('type-' + kind) };
+  });
 
   var sizeInputs = [
     { element: minImageInput, key: 'minImageSize' },
@@ -66,9 +74,15 @@
 
   function save(patch, message) {
     api.writeSettings(patch).then(function (ok) {
-      flashStatus(ok
-        ? (message || label('statusSaved', null, 'Saved'))
-        : label('statusSaveFailed', null, 'Could not save'));
+      if (ok) {
+        flashStatus(message || label('statusSaved', null, 'Saved'));
+        return;
+      }
+      flashStatus(label('statusSaveFailed', null, 'Could not save'));
+      // The page is showing a change that never reached storage - a site list
+      // past the quota, or too many writes in one minute - so it has to stop
+      // claiming otherwise and show what is really stored.
+      api.readSettings().then(render);
     });
   }
 
@@ -110,7 +124,12 @@
     minVectorInput.value = String(settings.minVectorSize);
     modeInput.value = settings.mode;
     hoverDelayInput.value = String(settings.hoverDelay);
-    renderHoverDelayState(settings.revealOnHover);
+    revealKeyInput.value = settings.revealKey;
+    renderHoverState(settings.revealOnHover);
+    typeInputs.forEach(function (entry) {
+      entry.element.checked = settings.blurTypes[entry.kind] !== false;
+    });
+    renderTypesState(settings);
     siteListMode = settings.siteListMode;
     siteListModeInput.value = settings.siteListMode;
     renderSiteListMode();
@@ -134,15 +153,37 @@
     save({ blurAmount: api.clampBlur(blurInput.value) });
   });
 
-  // A delay means nothing while nothing is ever revealed.
-  function renderHoverDelayState(revealOnHover) {
+  // A delay and a key both mean nothing while nothing is ever revealed.
+  function renderHoverState(revealOnHover) {
     hoverDelayInput.disabled = !revealOnHover;
     hoverDelayField.classList.toggle('is-disabled', !revealOnHover);
+    revealKeyInput.disabled = !revealOnHover;
+    revealKeyField.classList.toggle('is-disabled', !revealOnHover);
   }
 
   hoverInput.addEventListener('change', function () {
-    renderHoverDelayState(hoverInput.checked);
+    renderHoverState(hoverInput.checked);
     save({ revealOnHover: hoverInput.checked });
+  });
+
+  revealKeyInput.addEventListener('change', function () {
+    save({ revealKey: revealKeyInput.value });
+  });
+
+  /** Switching every kind off is a way of blurring nothing; it has to say so. */
+  function renderTypesState(settings) {
+    typesNone.hidden = api.blursAnything(settings);
+  }
+
+  typeInputs.forEach(function (entry) {
+    entry.element.addEventListener('change', function () {
+      var blurTypes = {};
+      typeInputs.forEach(function (other) {
+        blurTypes[other.kind] = other.element.checked;
+      });
+      renderTypesState({ blurTypes: blurTypes });
+      save({ blurTypes: blurTypes });
+    });
   });
 
   modeInput.addEventListener('change', function () {

@@ -23,6 +23,13 @@ const WIDTH = 1280;
 const HEIGHT = 800;
 
 /**
+ * Where the options page is cut in two. Named through the heading's message
+ * key rather than by counting cards, so re-ordering the page moves the cut
+ * with it instead of slicing a card down the middle.
+ */
+const CUT = 'section.card:has(h2[data-i18n="optionsHoverHeading"])';
+
+/**
  * Each shot: where to point the browser, what to do once it is there, and what
  * the resulting file is meant to show.
  */
@@ -79,32 +86,38 @@ const SHOTS = [
     metrics: { width: 320, height: 420 },
     trim: true
   },
+  // The options page is twice as tall as the store's canvas, and squeezed into
+  // it whole nothing on it can be read. So it is photographed in two halves,
+  // cut between two cards rather than through one.
   {
     file: '4-the-options-page.png',
-    describe: 'every setting, on one page',
+    describe: 'the top of the options page: strength, effect, what gets blurred, size limits',
     async take(session) {
-      await open(session, 'chrome-extension://' + session.extensionId + '/src/options/options.html');
-    }
+      await open(session, optionsUrl(session));
+    },
+    metrics: { width: 900, height: 1800 },
+    cutAt: CUT,
+    half: 'top'
+  },
+  {
+    file: '5-the-rest-of-the-options.png',
+    describe: 'the rest of it: the reveal, the site list, the settings file',
+    async take(session) {
+      await open(session, optionsUrl(session));
+    },
+    metrics: { width: 900, height: 1800 },
+    cutAt: CUT,
+    half: 'bottom'
   }
 ];
+
+function optionsUrl(session) {
+  return 'chrome-extension://' + session.extensionId + '/src/options/options.html';
+}
 
 async function open(session, url) {
   await session.page.send('Page.navigate', { url });
   await harness.sleep(2200);
-}
-
-/**
- * Centres a smaller rendering on the store's canvas rather than stretching it,
- * so the popup keeps the size it really has.
- */
-function centre(image, width, height) {
-  return {
-    width: WIDTH,
-    height: HEIGHT,
-    left: Math.round((WIDTH - width) / 2),
-    top: Math.round((HEIGHT - height) / 2),
-    image
-  };
 }
 
 async function capture(session, shot) {
@@ -118,17 +131,39 @@ async function capture(session, shot) {
 
   await shot.take(session, session.site);
 
-  // A popup is as tall as its contents, not as tall as the window it was
-  // rendered in, so the empty remainder is cut off rather than photographed.
+  // A page is as tall as its contents, not as tall as the window it was
+  // rendered in, so the remainder is cut off rather than photographed, and a
+  // page taller than the canvas is taken in halves. The viewport is then grown
+  // to the measured height: a clip reaching past the bottom of the viewport
+  // waits for a frame that never comes.
   var clip = null;
-  if (shot.trim) {
+  if (shot.trim || shot.half) {
     const size = await session.page.evaluate(`(() => {
       const body = document.body.getBoundingClientRect();
-      return { width: Math.ceil(body.width), height: Math.ceil(body.height) };
+      const cut = ${JSON.stringify(shot.cutAt || null)};
+      const at = cut ? document.querySelector(cut) : null;
+      return {
+        width: Math.ceil(body.width),
+        height: Math.ceil(body.height),
+        cut: at ? Math.round(at.getBoundingClientRect().top + window.scrollY) : 0
+      };
     })()`);
-    clip = { x: 0, y: 0, width: size.width, height: size.height, scale: 1 };
-    shot.metrics = { width: size.width, height: size.height };
+
+    await session.page.send('Emulation.setDeviceMetricsOverride', {
+      width: size.width, height: size.height, deviceScaleFactor: 1, mobile: false
+    });
+    await harness.sleep(500);
+
+    const top = shot.half === 'bottom' ? size.cut : 0;
+    const height = (shot.half === 'bottom' ? size.height : size.cut || size.height) - top;
+    clip = { x: 0, y: top, width: size.width, height, scale: 1 };
+    shot.metrics = { width: size.width, height };
   }
+
+  // Shot 3 leaves the popup in front of this tab, and a tab in the background
+  // is not painting: asking it for a picture waits for a frame nothing is in
+  // any hurry to produce.
+  await session.page.send('Page.bringToFront');
 
   const result = await session.page.send('Page.captureScreenshot',
     clip ? { format: 'png', clip } : { format: 'png' });
@@ -136,20 +171,29 @@ async function capture(session, shot) {
 }
 
 /**
- * Pads a screenshot out to the store's size with a flat surround, using the
- * page's own background colour so the join is not visible.
+ * Puts a smaller rendering on the store's canvas rather than stretching it, so
+ * the popup keeps the size it really has. Anything larger than the canvas -
+ * the options page is taller than any window - is scaled down to fit whole
+ * rather than cropped.
  */
 async function pad(session, shot, image) {
   if (!shot.metrics) {
     return image;
   }
-  const placed = centre(image, shot.metrics.width, shot.metrics.height);
+  const margin = 56;
+  const scale = Math.min(
+    1,
+    (WIDTH - margin) / shot.metrics.width,
+    (HEIGHT - margin) / shot.metrics.height
+  );
+  const width = Math.round(shot.metrics.width * scale);
   const dataUrl = 'data:image/png;base64,' + image.toString('base64');
 
   await session.page.send('Emulation.setDeviceMetricsOverride', {
     width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false
   });
   await session.page.send('Page.navigate', { url: 'about:blank' });
+  await session.page.send('Page.bringToFront');
   await harness.sleep(300);
   await session.page.evaluate(`(() => {
     document.documentElement.style.cssText = 'margin:0;height:100%';
@@ -159,7 +203,7 @@ async function pad(session, shot, image) {
     shadow.style.cssText = 'box-shadow:0 18px 60px rgba(20,24,40,.22);border-radius:12px;overflow:hidden;line-height:0';
     const picture = document.createElement('img');
     picture.src = ${JSON.stringify(dataUrl)};
-    picture.width = ${placed.image ? shot.metrics.width : 0};
+    picture.width = ${width};
     shadow.appendChild(picture);
     document.body.appendChild(shadow);
   })()`);

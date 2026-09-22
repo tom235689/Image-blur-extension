@@ -21,13 +21,17 @@ function badgeOff() {
 }
 
 function globalBadge(settings) {
-  var off = !settings.enabled;
-  chrome.action.setBadgeText({ text: off ? badgeOff() : '' });
+  // Every kind of media switched off is a second way of blurring nothing, and
+  // the badge has to show it as plainly as the switch itself.
+  var nothing = !api.blursAnything(settings);
+  chrome.action.setBadgeText({ text: !settings.enabled || nothing ? badgeOff() : '' });
   chrome.action.setBadgeBackgroundColor({ color: '#6b7280' });
   chrome.action.setTitle({
-    title: off
+    title: !settings.enabled
       ? label('tooltipTurnedOff', 'Image Blur - turned off')
-      : label('tooltipBlurring', 'Image Blur - blurring images')
+      : (nothing
+        ? label('tooltipNothingToBlur', 'Image Blur - no kind of media is set to be blurred')
+        : label('tooltipBlurring', 'Image Blur - blurring images'))
   });
 }
 

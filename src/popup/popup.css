@@ -189,7 +189,8 @@ input[type="range"] {
   background: none;
   color: var(--accent);
   font: inherit;
-  text-align: left;
+  /* start, not left: a right to left translation moves it with the text. */
+  text-align: start;
   cursor: pointer;
 }
 

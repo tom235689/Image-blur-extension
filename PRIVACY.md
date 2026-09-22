@@ -11,7 +11,7 @@ your own browser profile.
 
 | Stored | Where | Why | How long |
 | --- | --- | --- | --- |
-| Blur strength, effect, size limits, reveal on hover and its delay, the master on/off switch | `chrome.storage.sync` | So the extension behaves the way you set it up | Until you change it or uninstall the extension |
+| Blur strength, effect, size limits, which kinds of media are blurred, reveal on hover with its delay and the key it waits for, the master on/off switch | `chrome.storage.sync` | So the extension behaves the way you set it up | Until you change it or uninstall the extension |
 | The list of excluded hosts you added | `chrome.storage.sync` | So those sites are left unblurred | Until you remove the entry or uninstall the extension |
 | The id of a tab you paused | `chrome.storage.session` | So a pause survives until the tab is reloaded | Discarded when the browser closes |
 
@@ -28,6 +28,9 @@ has any way to read the result on another machine.
 - It does **not** read, store, transmit or keep a record of the pages you visit,
   their addresses, their content, or the images on them.
 - It does **not** read form fields, passwords, cookies or browsing history.
+- If you choose a key to hold before an image is revealed, it watches for that
+  key. It reads only the Alt, Ctrl and Shift flags that every event already
+  carries - never which key was pressed, and never anything you type.
 - It loads **no remote code**. Every line it runs ships inside the extension.
 - It contains **no third party libraries or services**.
 

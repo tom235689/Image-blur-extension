@@ -24,7 +24,8 @@ profile, so stored settings never leak between runs.
 run-tests.js        launches everything, runs the checks, reports
 build.js            validates the package and writes the store zip
 lib/cdp.js          minimal DevTools protocol client
-lib/server.js       serves tools/pages, and generates the large DOM page
+lib/server.js       serves tools/pages, and generates the large DOM and
+                    cross origin frame pages
 lib/harness.js      finds Chrome, starts it, loads the extension
 lib/settings-module.js  runs src/common/defaults.js outside the browser
 lib/locales.js      reads the message catalogue and finds which keys are used
@@ -50,9 +51,16 @@ module.exports = {
 ```
 
 `t` gives you `open`, `evaluate`, `filters`, `classesOf`, `hover`,
-`hoverElement`, `setSettings`, `resetSettings`, `sleep` and `expect`. Settings
-are reset to the defaults before each check. Add `browser: false` for a check
-that needs no page at all.
+`hoverElement`, `inFrame`, `setSettings`, `resetSettings`, `sleep` and
+`expect`, plus `site` and `otherSite`. Settings are reset to the defaults
+before each check. Add `browser: false` for a check that needs no page at all.
+
+`hover` and `hoverElement` take the protocol's modifier bitmask as a last
+argument - 1 Alt, 2 Ctrl, 4 Meta, 8 Shift - for the reveal that waits on a key.
+`inFrame` evaluates inside a frame loaded from `otherSite`, which is the same
+server under a different host name and therefore a genuinely cross origin
+frame: the page connection cannot see into one, because it is a target of its
+own.
 
 Anything the extension throws, or logs at error level, fails the run as well,
 which is how an unhandled rejection gets noticed instead of passing quietly.

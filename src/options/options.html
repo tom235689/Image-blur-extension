@@ -36,6 +36,37 @@
       </section>
 
       <section class="card">
+        <h2 data-i18n="optionsTypesHeading">What gets blurred</h2>
+        <p class="muted" data-i18n="optionsTypesNote">Anything switched off here is left exactly as the page drew it.</p>
+        <div class="checks">
+          <label class="check">
+            <input type="checkbox" id="type-images" />
+            <span data-i18n="optionsTypeImages">Images</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="type-videos" />
+            <span data-i18n="optionsTypeVideos">Videos</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="type-canvases" />
+            <span>
+              <span data-i18n="optionsTypeCanvases">Canvas drawings</span>
+              <span class="muted">- <span data-i18n="optionsTypeCanvasesHint">charts, maps and entire apps are drawn on one, and blurring it blurs all of them</span></span>
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="type-backgrounds" />
+            <span data-i18n="optionsTypeBackgrounds">CSS background images</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="type-vectors" />
+            <span data-i18n="optionsTypeVectors">Inline SVG</span>
+          </label>
+        </div>
+        <p id="types-none" class="error" data-i18n="optionsTypesNone" hidden>Nothing is left to blur, so nothing is blurred anywhere.</p>
+      </section>
+
+      <section class="card">
         <h2 data-i18n="optionsSizeHeading">Size limits</h2>
         <p class="muted" data-i18n="optionsSizeNote">Anything smaller than its limit in both directions is left sharp. Set a limit to 0 to blur every size.</p>
         <div class="field">
@@ -72,6 +103,18 @@
           </span>
         </div>
         <p class="muted" data-i18n="optionsHoverDelayNote">Stops a pointer that is only passing through from uncovering anything. The blur always comes back the moment the pointer leaves.</p>
+        <div class="field" id="reveal-key-field">
+          <label for="reveal-key" data-i18n="optionsRevealKeyLabel">Hold a key as well</label>
+          <span class="field-input">
+            <select id="reveal-key">
+              <option value="none" data-i18n="optionsRevealKeyNone">No key</option>
+              <option value="alt" data-i18n="optionsRevealKeyAlt">Alt</option>
+              <option value="ctrl" data-i18n="optionsRevealKeyCtrl">Ctrl</option>
+              <option value="shift" data-i18n="optionsRevealKeyShift">Shift</option>
+            </select>
+          </span>
+        </div>
+        <p class="muted" data-i18n="optionsRevealKeyNote">With a key chosen the pointer uncovers nothing by itself, which is what makes a blur survive somebody else looking at the screen. Only the key itself is watched, never what you type.</p>
       </section>
 
       <section class="card">

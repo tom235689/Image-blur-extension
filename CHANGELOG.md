@@ -8,6 +8,17 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- Each kind of media can now be left alone on its own: images, videos, canvas
+  drawings, CSS background images and inline SVG. Blurring all of them at once
+  is right for a photograph and wrong for everything a page draws itself - a
+  chart, a map or an entire application lives on a canvas, and a blurred video
+  is an unwatchable one. Turning every kind off is read as blurring nothing, and
+  the badge and the popup say so.
+- A key can be required before hovering reveals anything. A pointer crossing an
+  image uncovers it, which on a screen somebody else can see is the one thing
+  this extension is there to prevent; with Alt, Ctrl or Shift chosen the reveal
+  becomes deliberate. Only the modifier flag that every event already carries is
+  read, never which key was pressed.
 - The site list can now mean either of the two things a site list can mean:
   the hosts to leave alone, as before, or the only hosts to blur. The second
   is for someone who wants the blur on a handful of sites rather than on all
@@ -22,6 +33,25 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- A frame loaded from another host judged itself by its own host name rather
+  than by the page it was embedded in, so turning the blur off for a site left
+  every video, map and advert on it blurred, and turning it on for a site left
+  all of them sharp. The site list now means the site in the address bar, which
+  is the host the popup names next to the switch.
+- A page assigning `className` on its root element - which is how most theme
+  switchers are written - wiped the classes this extension keeps there and
+  started blurring a site the user had excluded. Nothing was watching either:
+  the observer is disconnected whenever nothing is being blurred, which is
+  precisely that case. The root element is now watched whatever the state.
+- Three lines of CSS in a page could switch the blur off altogether, by
+  declaring the custom property the radius travels in as `0px !important`. That
+  declaration is written important now, which a page stylesheet cannot outrank.
+- Hovering media that a size limit had spared set `filter: none` on it, taking
+  away the filter the page itself had asked for. The reveal spares whatever the
+  blur spared.
+- The options page went on showing a change that never reached storage when a
+  write failed - a site list past the quota, or too many writes in one minute.
+  It now says so and puts back what is really stored.
 - Reveal on hover declared its transition on the resting state, which replaced
   whatever transition a page had put on its own images. It now belongs to the
   hovered state alone, where the delay is all it was ever needed for.
@@ -35,10 +65,19 @@ All notable changes to this project are recorded here. The format follows
 - The hover delay is greyed out while reveal on hover is off, since it has
   nothing to delay.
 
-### Added
+### Changed
 
+- The popup says so when blurring is switched on but every kind of media has
+  been switched off, instead of claiming to blur images on every site.
+- The link at the foot of the popup is aligned to the start of the line rather
+  than to the left, so it follows a right to left translation.
+- The options page is photographed in two halves for the store. It is twice as
+  tall as the store's canvas, and squeezed onto it whole nothing on it could be
+  read.
 - The test harness fails a run on anything the extension throws or logs as an
-  error, so an unhandled rejection cannot hide behind passing assertions.
+  error, so an unhandled rejection cannot hide behind passing assertions. It can
+  also reach into a cross origin frame and hold a modifier key down, neither of
+  which anything could ask it to do before.
 - .gitattributes, so line endings are settled in the repository rather than
   renegotiated on every checkout.
 

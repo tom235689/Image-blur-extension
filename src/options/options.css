@@ -148,6 +148,13 @@ input[type="range"] {
   opacity: 0.5;
 }
 
+/* A column of them reads as a list, so each switch gets a line of its own. */
+.checks {
+  display: grid;
+  gap: 10px;
+  padding: 6px 0 2px;
+}
+
 .check {
   display: flex;
   align-items: center;

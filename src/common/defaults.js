@@ -22,14 +22,38 @@
    */
   var SITE_LIST_MODES = ['exceptions', 'only'];
 
+  /**
+   * Which key has to be held down before hovering reveals anything. A pointer
+   * crossing an image uncovers it by accident, and on a shared screen that is
+   * the one thing this extension is there to prevent.
+   */
+  var REVEAL_KEYS = ['none', 'alt', 'ctrl', 'shift'];
+
+  /**
+   * The kinds of media that can be turned off one at a time. A page drawn on a
+   * canvas is unusable once it is blurred and a video is unwatchable, so
+   * "blur the images" has to be able to mean only that.
+   */
+  var MEDIA_KINDS = ['images', 'videos', 'canvases', 'backgrounds', 'vectors'];
+
   var DEFAULT_SETTINGS = {
     enabled: true,
     blurAmount: 12,
     revealOnHover: true,
     /** How long the pointer must rest on something before it is revealed. */
     hoverDelay: 300,
+    /** A key that must be held down as well, or 'none' for hovering alone. */
+    revealKey: 'none',
     /** blur softens the image; blackout replaces it with a dark block. */
     mode: 'blur',
+    /** Which kinds of media are blurred at all. */
+    blurTypes: {
+      images: true,
+      videos: true,
+      canvases: true,
+      backgrounds: true,
+      vectors: true
+    },
     /** Whether the site list names what to leave alone, or what to blur. */
     siteListMode: 'exceptions',
     /** Raster media smaller than this in both directions is left sharp. 0 blurs everything. */
@@ -82,6 +106,21 @@
     return text;
   }
 
+  /**
+   * Always a fresh object carrying every kind, so that no caller can reach the
+   * defaults through a stored value and no surface has to cope with a missing
+   * key. Only an explicit false turns a kind off: a settings file written by an
+   * older version, or by hand, blurs more rather than less.
+   */
+  function normalizeBlurTypes(value) {
+    var source = value && typeof value === 'object' ? value : {};
+    var result = {};
+    for (var i = 0; i < MEDIA_KINDS.length; i += 1) {
+      result[MEDIA_KINDS[i]] = source[MEDIA_KINDS[i]] !== false;
+    }
+    return result;
+  }
+
   function normalizeSiteList(value) {
     var list = Array.isArray(value) ? value : [];
     var seen = Object.create(null);
@@ -104,7 +143,9 @@
       blurAmount: clampBlur(source.blurAmount),
       revealOnHover: source.revealOnHover !== false,
       hoverDelay: Math.min(HOVER_DELAY_MAX, Math.max(0, clampNumber(source.hoverDelay, DEFAULT_SETTINGS.hoverDelay))),
+      revealKey: REVEAL_KEYS.indexOf(source.revealKey) === -1 ? DEFAULT_SETTINGS.revealKey : source.revealKey,
       mode: MODES.indexOf(source.mode) === -1 ? DEFAULT_SETTINGS.mode : source.mode,
+      blurTypes: normalizeBlurTypes(source.blurTypes),
       siteListMode: SITE_LIST_MODES.indexOf(source.siteListMode) === -1
         ? DEFAULT_SETTINGS.siteListMode
         : source.siteListMode,
@@ -130,6 +171,21 @@
     }
     for (var i = 0; i < excludedSites.length; i += 1) {
       if (covers(normalizeHost(excludedSites[i]), host)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether any kind of media is left to blur at all. Switching every kind off
+   * is a way of blurring nothing, and every surface has to read it as one.
+   */
+  function blursAnything(settings) {
+    var source = settings && typeof settings === 'object' && settings.blurTypes
+      && typeof settings.blurTypes === 'object' ? settings.blurTypes : {};
+    for (var i = 0; i < MEDIA_KINDS.length; i += 1) {
+      if (source[MEDIA_KINDS[i]] !== false) {
         return true;
       }
     }
@@ -231,14 +287,18 @@
     HOVER_DELAY_MAX: HOVER_DELAY_MAX,
     MODES: MODES,
     SITE_LIST_MODES: SITE_LIST_MODES,
+    REVEAL_KEYS: REVEAL_KEYS,
+    MEDIA_KINDS: MEDIA_KINDS,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
     clampBlur: clampBlur,
     clampSize: clampSize,
     normalizeHost: normalizeHost,
     normalizeSiteList: normalizeSiteList,
+    normalizeBlurTypes: normalizeBlurTypes,
     normalizeSettings: normalizeSettings,
     isExcluded: isExcluded,
     isListed: isListed,
+    blursAnything: blursAnything,
     isSiteBlurred: isSiteBlurred,
     setSiteBlurred: setSiteBlurred,
     readSettings: readSettings,

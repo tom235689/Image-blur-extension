@@ -23,9 +23,9 @@ That is the only thing it does. There is no second feature to declare.
 **`storage`**
 
 > Stores the user's own settings: blur strength, the effect, the size limits,
-> whether hovering reveals an image, and the list of sites the user asked to
-> leave alone. Nothing else is stored, and none of it leaves the browser
-> profile.
+> which kinds of media are blurred, whether hovering reveals an image and what
+> key it waits for, and the list of sites the user asked to leave alone.
+> Nothing else is stored, and none of it leaves the browser profile.
 
 **Host permission `<all_urls>`** (shown to the user as "read and change all
 your data on all websites")
@@ -35,7 +35,9 @@ your data on all websites")
 > worked on a list of sites agreed in advance would not do the job. On a page
 > it adds its own stylesheet and marks which elements carry a picture. It reads
 > no page content, sends nothing anywhere, and makes no network request of any
-> kind.
+> kind. Where the user has chosen a key to hold before a picture is revealed,
+> it also watches for that key: it reads only the Alt, Ctrl and Shift flags
+> that every event already carries, never which key was pressed.
 
 There is no `tabs` permission: the popup gets the tab id from `tabs.query`,
 which needs none, and the host name from the content script rather than from
@@ -84,3 +86,8 @@ Screenshots are in `store/screenshots`, at the 1280x800 the dashboard wants.
 `npm run screenshots` retakes them with the extension really running, so they
 cannot drift away from what it does; every picture in them is drawn by
 `npm run images` rather than borrowed from anywhere.
+
+There are five: a blurred page, one picture revealed under the pointer, the
+popup, and the options page in two halves. The options page is twice as tall
+as the store's canvas, and squeezed onto it whole nothing on it can be read,
+so it is cut between two cards and shown at a size that can be.

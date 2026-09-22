@@ -28,6 +28,22 @@
   var CLASS_SMALL = 'ibx-small';
   var CLASS_MEDIA = 'ibx-media';
 
+  /**
+   * One class per kind of media that can be left alone, carried on <html>
+   * rather than on each element: the tagging pass runs long after the first
+   * paint, so an element could not be spared in time.
+   */
+  var SKIP_CLASSES = {
+    images: 'ibx-skip-image',
+    videos: 'ibx-skip-video',
+    canvases: 'ibx-skip-canvas',
+    backgrounds: 'ibx-skip-background',
+    vectors: 'ibx-skip-vector'
+  };
+
+  /** The modifier flag each reveal key choice reads off an event. */
+  var REVEAL_KEY_FLAGS = { alt: 'altKey', ctrl: 'ctrlKey', shift: 'shiftKey' };
+
   /** How long one scanning chunk may block the main thread. */
   var FRAME_BUDGET_MS = 8;
 
@@ -59,6 +75,10 @@
   var paused = false;
   var reportedOnce = false;
   var observer = null;
+  /** Watches <html> for a page writing over the state kept there. */
+  var rootGuard = null;
+  /** Whether the key the reveal is waiting for is down at this moment. */
+  var revealKeyHeld = false;
   var pending = new Set();
   var scheduled = false;
   var resizeTimer = 0;
@@ -95,22 +115,26 @@
   }
 
   /**
-   * The frame's own host, falling back to the top level document for
-   * about:blank and srcdoc frames, which have no host of their own.
+   * The host the site list is about, which is the page the user is looking at
+   * rather than wherever a frame's own source happens to come from. A site left
+   * off the blur has to stay off across the videos, maps and adverts it embeds,
+   * or half the page contradicts the switch the user just used; the popup names
+   * that same host, so this is also what it promised. ancestorOrigins is
+   * readable across origins, so a frame can always find out where it is.
    */
   function currentHost() {
-    if (location.hostname) {
-      return location.hostname;
-    }
     try {
       var origins = location.ancestorOrigins;
       if (origins && origins.length) {
-        return new URL(origins[origins.length - 1]).hostname;
+        var embedder = new URL(origins[origins.length - 1]).hostname;
+        if (embedder) {
+          return embedder;
+        }
       }
     } catch (error) {
-      /* Cross origin ancestors are not readable; treat the frame as unknown. */
+      /* A sandboxed ancestor has an opaque origin; fall back to our own. */
     }
-    return '';
+    return location.hostname || '';
   }
 
   /**
@@ -565,9 +589,6 @@
     for (var i = 0; i < records.length; i += 1) {
       var record = records[i];
       if (record.type === 'attributes') {
-        if (record.target === root() && record.attributeName === 'style') {
-          restoreRootVariables();
-        }
         pending.add(record.target);
         continue;
       }
@@ -585,6 +606,9 @@
    * re-checked as it is entered.
    */
   function onPointerEnter(event) {
+    // A key can be held while the page has no focus at all, and then no key
+    // event ever arrives; the pointer event carries the same flag.
+    readRevealKey(event);
     if (!active || !event.target || event.target.nodeType !== 1) {
       return;
     }
@@ -626,6 +650,132 @@
     pending.clear();
   }
 
+  /**
+   * Whether hovering reveals anything at the moment. A reveal key makes the
+   * reveal deliberate: a pointer crossing an image uncovers nothing on its
+   * own, which is the difference between a blur that survives somebody else
+   * looking at the screen and one that does not.
+   */
+  function revealAllowed() {
+    if (!settings.revealOnHover) {
+      return false;
+    }
+    return settings.revealKey === 'none' || revealKeyHeld;
+  }
+
+  /** Writes a class only when it is not already there, so nothing loops. */
+  function setRootClass(element, name, on) {
+    try {
+      if (element.classList.contains(name) === !!on) {
+        return;
+      }
+      if (on) {
+        element.classList.add(name);
+      } else {
+        element.classList.remove(name);
+      }
+    } catch (error) {
+      /* Nothing to write the class to. */
+    }
+  }
+
+  /**
+   * The same for the two numbers, which travel as custom properties. Written
+   * important, because a page may declare the same property itself and a
+   * radius of zero is a blur of nothing: an inline important declaration is the
+   * one thing a page stylesheet cannot outrank.
+   */
+  function setRootVariable(element, name, value) {
+    try {
+      if (element.style.getPropertyValue(name) === value) {
+        return;
+      }
+      element.style.setProperty(name, value, 'important');
+    } catch (error) {
+      /* Nothing to write the property to. */
+    }
+  }
+
+  /**
+   * Everything this extension keeps on <html>: what is switched off, what may
+   * be revealed, which kinds of media are left alone, and the two numbers the
+   * stylesheet reads. It lives in one function because all of it has to be
+   * written again every time a page writes over it.
+   */
+  function applyRootState() {
+    var element = root();
+    if (!element) {
+      return;
+    }
+
+    setRootVariable(element, '--ibx-blur-radius', settings.blurAmount + 'px');
+    setRootVariable(element, '--ibx-hover-delay', settings.hoverDelay + 'ms');
+
+    setRootClass(element, CLASS_OFF, !active);
+    setRootClass(element, CLASS_HOVER, active && revealAllowed());
+    setRootClass(element, CLASS_BLACKOUT, settings.mode === 'blackout');
+
+    var types = settings.blurTypes || {};
+    for (var i = 0; i < api.MEDIA_KINDS.length; i += 1) {
+      var kind = api.MEDIA_KINDS[i];
+      setRootClass(element, SKIP_CLASSES[kind], types[kind] === false);
+    }
+  }
+
+  /**
+   * A page is free to rewrite the class or the style attribute of <html> for
+   * its own reasons, and a theme switcher assigning className does exactly
+   * that. It takes ibx-off off a site the user excluded and starts blurring it,
+   * or drops the radius back to whatever the stylesheet defaults to. The
+   * scanning observer cannot do this job: it is disconnected whenever nothing
+   * is being blurred, which is precisely the state a page must not be able to
+   * undo.
+   */
+  function watchRoot() {
+    var element = root();
+    if (!element || typeof MutationObserver !== 'function') {
+      return;
+    }
+    if (!rootGuard) {
+      rootGuard = new MutationObserver(applyRootState);
+    }
+    try {
+      // Observing an element it already watches only replaces the registration.
+      rootGuard.observe(element, { attributes: true, attributeFilter: ['class', 'style'] });
+    } catch (error) {
+      /* Nothing to observe; the state is written once and left at that. */
+    }
+  }
+
+  /**
+   * Only the modifier flag that every event already carries is read here, and
+   * never which key was pressed.
+   */
+  function readRevealKey(event) {
+    var flag = REVEAL_KEY_FLAGS[settings.revealKey];
+    if (!flag) {
+      return;
+    }
+    setRevealKeyHeld(!!event[flag]);
+  }
+
+  function setRevealKeyHeld(held) {
+    if (revealKeyHeld === held) {
+      return;
+    }
+    revealKeyHeld = held;
+    applyRootState();
+  }
+
+  /**
+   * A key let go of while the page is not in front never reports itself, so
+   * losing the window counts as letting go. The alternative is a page left
+   * ready to reveal whatever the pointer lands on next.
+   */
+  function clearRevealKey() {
+    setRevealKeyHeld(false);
+  }
+
   function applySettings(next) {
     var previous = settings;
     settings = next;
@@ -635,13 +785,13 @@
       return;
     }
 
-    active = settings.enabled && !paused && api.isSiteBlurred(currentHost(), settings);
+    active = settings.enabled
+      && !paused
+      && api.blursAnything(settings)
+      && api.isSiteBlurred(currentHost(), settings);
 
-    element.style.setProperty('--ibx-blur-radius', settings.blurAmount + 'px');
-    element.style.setProperty('--ibx-hover-delay', settings.hoverDelay + 'ms');
-    element.classList.toggle(CLASS_OFF, !active);
-    element.classList.toggle(CLASS_HOVER, active && settings.revealOnHover);
-    element.classList.toggle(CLASS_BLACKOUT, settings.mode === 'blackout');
+    applyRootState();
+    watchRoot();
 
     // Only a change of activation needs the tree walked again: the radius and
     // the hover mode are carried by the custom property and the classes above,
@@ -666,20 +816,6 @@
    * show a badge for it. The first report after a load also says so, which is
    * how a pause is dropped when the tab reloads.
    */
-  /**
-   * The radius and the delay are inline custom properties on <html>, so a page
-   * that rewrites that style attribute wipes them and every blur on the page
-   * falls back to the stylesheet default.
-   */
-  function restoreRootVariables() {
-    var element = root();
-    if (!element || element.style.getPropertyValue('--ibx-blur-radius')) {
-      return;
-    }
-    element.style.setProperty('--ibx-blur-radius', settings.blurAmount + 'px');
-    element.style.setProperty('--ibx-hover-delay', settings.hoverDelay + 'ms');
-  }
-
   function reportState() {
     if (window.top !== window) {
       return;
@@ -793,6 +929,13 @@
     document.addEventListener('DOMContentLoaded', rescan, true);
     document.addEventListener('mouseover', onPointerEnter, { capture: true, passive: true });
     document.addEventListener('load', onResourceLoad, { capture: true, passive: true });
+    document.addEventListener('keydown', readRevealKey, { capture: true, passive: true });
+    document.addEventListener('keyup', readRevealKey, { capture: true, passive: true });
+    // Not in the capture phase: blur does not bubble, but a capturing listener
+    // on the window sees every element in the page losing focus as well, and a
+    // click from one box to another is not the window going away.
+    window.addEventListener('blur', clearRevealKey);
+    document.addEventListener('visibilitychange', clearRevealKey);
 
     // A responsive layout can push an element across a size limit, but only if
     // there is a limit to cross.
@@ -807,6 +950,11 @@
     // images without touching an observed attribute, so sweep again once the
     // page has settled.
     window.addEventListener('load', function () {
+      // A document that replaced its own root element - document.write, an XSLT
+      // result - left the guard watching an element that is no longer there,
+      // and took the state written on it with it.
+      applyRootState();
+      watchRoot();
       rescan();
       setTimeout(rescan, 1200);
       scheduleShadowSweeps();

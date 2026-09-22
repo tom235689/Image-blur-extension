@@ -34,9 +34,32 @@ function largeDomPage(rows) {
   ].join('');
 }
 
+/**
+ * A page holding a frame served from a different host name, which is what an
+ * embedded video, map or advert is. The same server answers to both names, so
+ * the frame is genuinely cross origin without a second server.
+ */
+function embeddedPage(host) {
+  const parts = String(host || '').split(':');
+  const other = (parts[0] === 'localhost' ? '127.0.0.1' : 'localhost') + (parts[1] ? ':' + parts[1] : '');
+  return [
+    '<!doctype html><html><head><meta charset="utf-8"><title>an embedded frame</title>',
+    '</head><body>',
+    '<img id="own-image" src="/checker.png" width="120" height="120">',
+    '<iframe id="embedded" src="http://' + other + '/frame-inner.html" width="300" height="160"></iframe>',
+    '</body></html>'
+  ].join('');
+}
+
 function start() {
   const server = http.createServer((request, response) => {
     const name = decodeURIComponent((request.url || '/').split('?')[0]).replace(/^\//, '') || 'index.html';
+
+    if (name === 'generated/embedded.html') {
+      response.writeHead(200, { 'Content-Type': TYPES['.html'] });
+      response.end(embeddedPage(request.headers.host));
+      return;
+    }
 
     if (name === 'generated/large-dom.html') {
       response.writeHead(200, { 'Content-Type': TYPES['.html'] });

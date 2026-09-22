@@ -115,6 +115,30 @@
     "message": "Reset every Image Blur setting to its default?",
     "description": "Confirmation asked before settings are reset."
   },
+  "optionsRevealKeyAlt": {
+    "message": "Alt",
+    "description": "Menu choice naming the Alt key, called Option on a Mac keyboard."
+  },
+  "optionsRevealKeyCtrl": {
+    "message": "Ctrl",
+    "description": "Menu choice naming the Control key."
+  },
+  "optionsRevealKeyLabel": {
+    "message": "Hold a key as well",
+    "description": "Label of the menu choosing a key that hovering also requires."
+  },
+  "optionsRevealKeyNone": {
+    "message": "No key",
+    "description": "Menu choice: hovering alone reveals an image, with no key held."
+  },
+  "optionsRevealKeyNote": {
+    "message": "With a key chosen the pointer uncovers nothing by itself, which is what makes a blur survive somebody else looking at the screen. Only the key itself is watched, never what you type.",
+    "description": "Explains why a reveal key is worth setting, and that nothing typed is read."
+  },
+  "optionsRevealKeyShift": {
+    "message": "Shift",
+    "description": "Menu choice naming the Shift key."
+  },
   "optionsSitesAdd": {
     "message": "Add",
     "description": "Button that adds the typed host to the exception list."
@@ -189,6 +213,42 @@
     "message": "Image Blur options",
     "description": "Title of the options page."
   },
+  "optionsTypeBackgrounds": {
+    "message": "CSS background images",
+    "description": "Checkbox label: pictures a stylesheet puts behind an element."
+  },
+  "optionsTypeCanvases": {
+    "message": "Canvas drawings",
+    "description": "Checkbox label: anything a page paints itself on a <canvas> element."
+  },
+  "optionsTypeCanvasesHint": {
+    "message": "charts, maps and entire apps are drawn on one, and blurring it blurs all of them",
+    "description": "Warning after the canvas label, continuing the sentence after a dash."
+  },
+  "optionsTypeImages": {
+    "message": "Images",
+    "description": "Checkbox label: photographs and pictures, the <img> element."
+  },
+  "optionsTypeVectors": {
+    "message": "Inline SVG",
+    "description": "Checkbox label: drawings written into the page as SVG markup."
+  },
+  "optionsTypeVideos": {
+    "message": "Videos",
+    "description": "Checkbox label: video players and their preview frames."
+  },
+  "optionsTypesHeading": {
+    "message": "What gets blurred",
+    "description": "Heading of the section that turns whole kinds of media on and off."
+  },
+  "optionsTypesNone": {
+    "message": "Nothing is left to blur, so nothing is blurred anywhere.",
+    "description": "Warning shown when every kind of media has been switched off."
+  },
+  "optionsTypesNote": {
+    "message": "Anything switched off here is left exactly as the page drew it.",
+    "description": "Explains what turning a kind of media off does."
+  },
   "popupBlurStrength": {
     "message": "Blur strength",
     "description": "Label above the blur radius slider."
@@ -216,6 +276,10 @@
   "popupStateListed": {
     "message": "Blurring images on the listed sites",
     "description": "Popup subtitle while the site list names the only sites to blur."
+  },
+  "popupStateNothing": {
+    "message": "No kind of media is set to be blurred",
+    "description": "Popup subtitle when blurring is on but every kind of media is switched off."
   },
   "popupStateOff": {
     "message": "Blurring is turned off",
@@ -290,6 +354,10 @@
   "tooltipBlurring": {
     "message": "Image Blur - blurring images",
     "description": "Toolbar tooltip when the extension is working normally."
+  },
+  "tooltipNothingToBlur": {
+    "message": "Image Blur - no kind of media is set to be blurred",
+    "description": "Toolbar button tooltip when blurring is on but every kind of media is switched off."
   },
   "tooltipPausedTab": {
     "message": "Image Blur - paused on this tab",

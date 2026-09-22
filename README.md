@@ -25,8 +25,13 @@ the first page loads.
   for when the exception list would be too permanent.
 - **Effect** - blur softens the image; blackout blurs it and then drops it to
   black, so there is nothing left to read at any strength.
-- **Options page** (link at the bottom of the popup) - size limits, reveal on
-  hover, the excluded site list, and a reset button.
+- **What gets blurred** - images, videos, canvas drawings, CSS background
+  images and inline SVG, each of which can be left alone on its own. A chart, a
+  map or an entire application is often drawn on a single canvas, and blurring
+  that blurs the lot; a blurred video is an unwatchable one. Switching every
+  kind off is read as blurring nothing, and the badge says so.
+- **Options page** (link at the bottom of the popup) - what gets blurred, size
+  limits, reveal on hover, the site list, a settings file and a reset button.
 - **Size limits** - anything smaller than its limit in *both* directions is left
   sharp. Raster media (images, videos, canvases, background images) starts at 0,
   so every size is blurred; inline SVG starts at 48 px, because that is how most
@@ -34,13 +39,18 @@ the first page loads.
   256 px.
 - **Reveal on hover** - on by default, after a 300 ms wait so a pointer merely
   passing through uncovers nothing. The cover comes back the moment the pointer
-  leaves. Turn it off and blurred media stays blurred.
+  leaves. A key can be required as well - Alt, Ctrl or Shift - which turns an
+  accidental reveal into a deliberate one; only the modifier flag that every
+  event already carries is read, never which key was pressed. Turn the reveal
+  off and blurred media stays blurred.
 - **Site list** - either the hosts to leave alone, or the only hosts to blur,
-  whichever the options page is set to. A host also covers its sub domains, so
-  `example.com` covers `images.example.com`. Because of that, turning the site
-  switch back on for `images.example.com` removes the `example.com` entry that
-  was covering it: a list of hosts cannot say "this host, but not that sub
-  domain of it".
+  whichever the options page is set to. The host is the one in the address bar,
+  so a frame embedded from somewhere else - a video, a map, an advert - follows
+  the page it is on rather than wherever its own source came from. A host also
+  covers its sub domains, so `example.com` covers `images.example.com`. Because
+  of that, turning the site switch back on for `images.example.com` removes the
+  `example.com` entry that was covering it: a list of hosts cannot say "this
+  host, but not that sub domain of it".
 - **Settings file** - export every setting to JSON and import it back, for a
   backup or for a second computer. An imported file is validated the same way
   every other path is, so nothing in it can produce a state the interface
@@ -67,6 +77,16 @@ classes on `<html>`:
 | `ibx-off` | extension disabled, this host is excluded, or this tab is paused |
 | `ibx-hover` | reveal the element under the pointer |
 | `ibx-blackout` | swap the blur for a blur plus brightness(0) |
+| `ibx-skip-image`, `ibx-skip-video`, `ibx-skip-canvas`, `ibx-skip-background`, `ibx-skip-vector` | that kind of media is not blurred at all |
+
+Those classes and the two custom properties that carry the numbers are all a
+page can see of this extension, and a page is free to rewrite the attributes
+they live in - assigning `className` is how most theme switchers are written.
+So the root element is watched whatever the state, including while nothing is
+being blurred and the scanning observer is disconnected, and anything wiped is
+written straight back. The properties are written `!important` for the same
+reason: a page declaring the radius as zero would otherwise switch the blur off
+from the inside.
 
 CSS selectors cannot ask "does this element have a background image?", so
 `src/content/content.js` walks the DOM in idle time chunks, reads the computed
@@ -81,6 +101,10 @@ style and tags what it finds:
 | `ibx-vector` | inline `<svg>` at or above the vector size limit |
 | `ibx-media` | a picture no selector can reach: an untyped `<object>` or `<embed>`, a `content: url()`, a border drawn from an image |
 | `ibx-small` | media below the raster size limit, excluded from the blur rule |
+
+Wherever a rule spares something, the hover reveal has to spare it too: the
+reveal is the one rule here that sets `filter: none`, and on an element that
+was never blurred that would take away the filter the page asked for.
 
 Every rule is written so that it does not match when there is nothing to blur,
 rather than matching and switching the blur off again. A rule that said
@@ -126,8 +150,10 @@ built with:
 
 Both were verified against a Flutter 3.22.2 build of the same app. With
 CanvasKit nothing can tell image pixels from text pixels inside the canvas, so
-blurring it is all or nothing. Two ways out: reveal on hover shows the app while
-the pointer is over it, and the app's host can go on the exception list.
+blurring it is all or nothing. Three ways out: switch canvas drawings off under
+what gets blurred, which leaves every CanvasKit app alone while images
+everywhere else stay covered; reveal on hover, which shows the app while the
+pointer is over it; or put the app's host on the site list.
 
 ## Tests
 
@@ -200,6 +226,11 @@ and the test suite additionally fails on a key nothing asks for.
   extensions, so media inside them stays sharp. Open roots attached long after
   their host was scanned are picked up by sweeps at 1, 3, 8 and 20 seconds after
   load, so one attached later than that is missed.
+- The key a reveal waits for is noticed through the page the pointer is over,
+  so it has to reach that page: one pressed while the focus is still in the
+  address bar is seen only when the pointer next moves. Moving onto an image
+  with the key already held always works, and losing the window counts as
+  letting go, so nothing is left ready to reveal.
 - A blur radius is measured in the element's own coordinates, so an image scaled
   down by a CSS transform is blurred proportionally less than one sized by
   width and height.

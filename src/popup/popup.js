@@ -42,10 +42,20 @@
   function renderEnabled(enabled) {
     document.body.classList.toggle('is-off', !enabled);
     stateLabel.textContent = enabled
-      ? (settings.siteListMode === 'only'
-        ? label('popupStateListed', 'Blurring images on the listed sites')
-        : label('popupStateOn', 'Blurring images on every site'))
+      ? whatIsBlurred()
       : label('popupStateOff', 'Blurring is turned off');
+  }
+
+  /** What the switch being on actually amounts to at the moment. */
+  function whatIsBlurred() {
+    if (!api.blursAnything(settings)) {
+      // Every kind turned off on the options page: switched on, blurring
+      // nothing, and saying so beats a switch that looks like it is working.
+      return label('popupStateNothing', 'No kind of media is set to be blurred');
+    }
+    return settings.siteListMode === 'only'
+      ? label('popupStateListed', 'Blurring images on the listed sites')
+      : label('popupStateOn', 'Blurring images on every site');
   }
 
   function renderSettings(next) {
