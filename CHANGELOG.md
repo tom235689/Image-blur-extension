@@ -33,6 +33,16 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- A shadow root attached inside another shadow root was never found, so every
+  image in it stayed sharp for good - on a page that looked as though the
+  extension was working, because the tree around it was covered. The sweep that
+  hunts for late roots walked the document, and `querySelectorAll` stops at
+  every shadow boundary; it now goes through each tree it finds as well as into
+  it. A component built out of components is the ordinary case for anything
+  written with web components.
+- Roots waiting for the stylesheet were held for the life of the page once the
+  last attempt at fetching it had failed, rather than let go of along with the
+  attempts.
 - A frame loaded from another host judged itself by its own host name rather
   than by the page it was embedded in, so turning the blur off for a site left
   every video, map and advert on it blurred, and turning it on for a site left
@@ -83,6 +93,12 @@ All notable changes to this project are recorded here. The format follows
   dragging a throttle.
 - The fixture server answers on both loopback addresses, so the cross origin
   check cannot fail on a machine where localhost means ::1 before 127.0.0.1.
+- The build refuses an icon that is not the size it is declared as, which the
+  store finds only after an upload.
+- The archive itself is checked: the bytes are read back the way a reader reads
+  them, the checksums are compared against ones computed elsewhere, and the
+  same files are confirmed to produce the same archive twice. Nothing had ever
+  opened what the release writes.
 - The link at the foot of the popup is aligned to the start of the line rather
   than to the left, so it follows a right to left translation.
 - The options page is photographed in two halves for the store. It is twice as

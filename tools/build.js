@@ -38,6 +38,50 @@ function exists(relative) {
   return fs.existsSync(path.join(ROOT, relative));
 }
 
+const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+/**
+ * The size a PNG declares in its header, or null if the file is not one. The
+ * first chunk of a PNG is always IHDR, and its first eight bytes are the width
+ * and the height, so this needs to read 24 bytes and no library.
+ */
+function pngSize(relative) {
+  const data = fs.readFileSync(path.join(ROOT, relative));
+  if (data.length < 24 || !data.subarray(0, 8).equals(PNG_SIGNATURE)) {
+    return null;
+  }
+  return { width: data.readUInt32BE(16), height: data.readUInt32BE(20) };
+}
+
+/**
+ * An icon declared under one size and drawn at another is accepted here and
+ * refused, or silently rescaled, later. Both sets are checked: the store reads
+ * manifest.icons, and the toolbar reads action.default_icon.
+ */
+function checkIcons(manifest) {
+  const sets = [manifest.icons, manifest.action && manifest.action.default_icon];
+  const declared = new Map();
+  for (const set of sets) {
+    // The two sets normally name the same files at the same sizes, so they are
+    // gathered before being judged: one file drawn wrong is one problem.
+    for (const size of Object.keys(set || {})) {
+      declared.set(set[size] + ' @ ' + size, { file: set[size], size: Number(size) });
+    }
+  }
+
+  for (const { file, size } of declared.values()) {
+    if (!exists(file)) {
+      continue;
+    }
+    const png = pngSize(file);
+    if (!png) {
+      fail(file + ' is declared as an icon but is not a PNG');
+    } else if (png.width !== size || png.height !== size) {
+      fail(file + ' is declared as ' + size + ' square but is ' + png.width + 'x' + png.height);
+    }
+  }
+}
+
 /** Every path the manifest promises will be in the package. */
 function referencedFiles(manifest) {
   const files = [];
@@ -161,6 +205,7 @@ function main() {
   }
 
   checkManifest(manifest);
+  checkIcons(manifest);
   checkLocales(manifest);
 
   if (problems.length) {

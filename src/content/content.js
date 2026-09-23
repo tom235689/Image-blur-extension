@@ -205,8 +205,14 @@
         sheetInFlight = false;
 
         if (chrome.runtime.lastError || !response || !response.css) {
-          // The worker was asleep, or busy starting; ask again shortly.
+          // The worker was asleep, or busy starting; ask again shortly. Once
+          // the attempts are spent there is nothing left to wait for, and the
+          // roots that were waiting have to be let go of rather than held for
+          // the life of the page.
           requestShadowSheet();
+          if (!sheetStillComing()) {
+            giveUpOnSheet();
+          }
           return;
         }
 
@@ -485,6 +491,37 @@
   }
 
   /**
+   * Every open shadow root under a node, the ones nested inside other shadow
+   * trees included. querySelectorAll stops at each boundary, so finding those
+   * means running it again inside every root it turns up: a component built out
+   * of components hides its images one tree further down than a single pass
+   * can see.
+   *
+   * Declared before its callers rather than beside the sweep, because both the
+   * scan and the sweep ask it the same question.
+   */
+  function collectShadowRoots(node, found) {
+    var elements;
+    try {
+      elements = node.querySelectorAll ? node.querySelectorAll('*') : null;
+    } catch (error) {
+      return found;
+    }
+    if (!elements) {
+      return found;
+    }
+
+    for (var i = 0; i < elements.length; i += 1) {
+      var shadowRoot = elements[i].shadowRoot;
+      if (shadowRoot) {
+        found.push(shadowRoot);
+        collectShadowRoots(shadowRoot, found);
+      }
+    }
+    return found;
+  }
+
+  /**
    * Queues a node and everything under it. Only queueing happens here; the
    * work itself is spread over idle callbacks, so even a very large tree is
    * safe to enqueue in one go.
@@ -515,27 +552,18 @@
   }
 
   /**
-   * Queues a tree together with every open shadow tree inside it. Used when a
-   * whole pass has to be redone, since querySelectorAll stops at a shadow
-   * boundary.
+   * Queues a tree together with every open shadow tree inside it, at any depth.
+   * Used when a whole pass has to be redone, since querySelectorAll stops at a
+   * shadow boundary. What counts as "every shadow tree" is answered in one
+   * place, shared with the sweep: two walks that could disagree is how a tree
+   * nested inside another came to be missed.
    */
   function enqueueDeep(node) {
     enqueueTree(node);
 
-    var elements;
-    try {
-      elements = node.querySelectorAll ? node.querySelectorAll('*') : null;
-    } catch (error) {
-      return;
-    }
-    if (!elements) {
-      return;
-    }
-
-    for (var i = 0; i < elements.length; i += 1) {
-      if (elements[i].shadowRoot) {
-        enqueueDeep(elements[i].shadowRoot);
-      }
+    var roots = collectShadowRoots(node, []);
+    for (var i = 0; i < roots.length; i += 1) {
+      enqueueTree(roots[i]);
     }
   }
 
@@ -881,22 +909,11 @@
       return;
     }
 
-    var elements;
-    try {
-      elements = document.querySelectorAll('*');
-    } catch (error) {
-      return;
-    }
-
-    var found = [];
-    for (var i = 0; i < elements.length; i += 1) {
-      var shadowRoot = elements[i].shadowRoot;
-      if (shadowRoot && !knownShadowRoots.has(shadowRoot)) {
-        found.push(shadowRoot);
+    var found = collectShadowRoots(document, []);
+    for (var i = 0; i < found.length; i += 1) {
+      if (!knownShadowRoots.has(found[i])) {
+        registerShadowRoot(found[i]);
       }
-    }
-    for (var j = 0; j < found.length; j += 1) {
-      registerShadowRoot(found[j]);
     }
   }
 

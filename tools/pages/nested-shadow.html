@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>a shadow root inside a shadow root</title>
+  </head>
+  <body>
+    <outer-card id="outer"></outer-card>
+    <script>
+      class OuterCard extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          root.innerHTML =
+            '<img id="outer-image" src="checker.png" width="120" height="120">' +
+            '<div id="inner-host"></div>';
+
+          // The inner host is in the tree from the start and only attaches its
+          // own root once the page has long been scanned. attachShadow emits no
+          // mutation record, so only a sweep can find this one - and a sweep
+          // that walks the document alone never reaches inside this tree.
+          setTimeout(function () {
+            const inner = root.getElementById('inner-host').attachShadow({ mode: 'open' });
+            inner.innerHTML = '<img id="inner-image" src="checker.png" width="120" height="120">';
+          }, 4000);
+        }
+      }
+      customElements.define('outer-card', OuterCard);
+    </script>
+  </body>
+</html>

@@ -125,6 +125,14 @@ root that turns up gets the same sheet adopted into it (the service worker hands
 over the text) and is observed and scanned like the main document. Shadow tree
 copies of the rules use `:host-context(html:not(.ibx-off))` where the document
 uses `:root:not(.ibx-off)`, because a shadow tree cannot see the root element.
+Every gate is written in both flavours, and a gate added to one and forgotten
+in the other is invisible until somebody looks inside a component, so the suite
+checks the shadow copy of each of them.
+
+Searching for those roots has to go through them as well as into them. A
+component is routinely built out of components, and `querySelectorAll` stops at
+every boundary, so each shadow tree found is searched again for the ones nested
+inside it.
 
 A `MutationObserver` keeps up with dynamically added content, the page is swept
 again on `DOMContentLoaded` and shortly after `load` to catch late stylesheets
@@ -226,7 +234,8 @@ and the test suite additionally fails on a key nothing asks for.
 - Closed shadow roots (`attachShadow({ mode: 'closed' })`) are invisible to
   extensions, so media inside them stays sharp. Open roots attached long after
   their host was scanned are picked up by sweeps at 1, 3, 8 and 20 seconds after
-  load, so one attached later than that is missed.
+  load, however deeply they are nested, so one attached later than that is
+  missed.
 - The key a reveal waits for is noticed through the page the pointer is over,
   so it has to reach that page: one pressed while the focus is still in the
   address bar is seen only when the pointer next moves. Moving onto an image
